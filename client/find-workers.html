@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Workers Near You - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .map-page { display: flex; height: 100vh; overflow: hidden; }
+        .map-sidebar { width: 380px; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; z-index: 500; }
+        .sidebar-header { padding: 25px; border-bottom: 1px solid #f0f0f0; }
+        .sidebar-header h1 { font-size: 1.4rem; font-weight: 800; color: #1a1a1a; margin-bottom: 5px; display:flex; align-items:center; gap:8px;}
+        .sidebar-header p { font-size: 0.85rem; color: #64748b; }
+        .filter-bar { padding: 15px 25px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; align-items: center; }
+        .filter-select { padding: 8px 14px; border-radius: 12px; border: 2px solid #e5dfd5; font-size: 0.85rem; font-weight: 600; background: white; flex: 1; outline: none; }
+        .filter-select:focus { border-color: #10b981; }
+        .radius-slider { padding: 10px 25px 15px; border-bottom: 1px solid #f0f0f0; }
+        .radius-slider label { font-size: 0.8rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 5px; }
+        .radius-slider input[type="range"] { width: 100%; accent-color: #10b981; }
+        .radius-value { font-size: 0.85rem; font-weight: 800; color: #10b981; }
+        .worker-list { flex: 1; overflow-y: auto; padding: 15px; }
+        .worker-card { background: white; border: 1px solid #f0f0f0; border-radius: 20px; padding: 18px; margin-bottom: 12px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 15px; }
+        .worker-card:hover { border-color: #10b981; box-shadow: 0 8px 20px rgba(16,185,129,0.1); transform: translateY(-2px); }
+        .worker-avatar { width: 50px; height: 50px; border-radius: 16px; background: linear-gradient(135deg, #10b981, #059669); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0; overflow:hidden;}
+        .worker-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .worker-info { flex: 1; }
+        .worker-info h4 { font-size: 0.95rem; font-weight: 700; color: #1a1a1a; margin-bottom: 3px; }
+        .worker-info .meta { font-size: 0.78rem; color: #64748b; display: flex; align-items: center; gap: 8px; }
+        .worker-distance { font-size: 0.82rem; font-weight: 800; color: #10b981; text-align: right; }
+        .worker-distance small { display: block; color: #94a3b8; font-weight: 500; font-size: 0.72rem; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+        .empty-state i { font-size: 3rem; margin-bottom: 10px; }
+        .loading-state { text-align: center; padding: 40px; color: #10b981; }
+        .loading-state i { font-size: 2rem; animation: spin 1s linear infinite; }
+        #map { flex: 1; height: 100vh; z-index: 1;}
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: #64748b; text-decoration: none; font-weight: 700; font-size: 0.85rem; margin-bottom: 12px; transition: 0.2s; }
+        .back-link:hover { color: #10b981; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @media (max-width: 768px) {
+            .map-page { flex-direction: column-reverse; }
+            .map-sidebar { width: 100%; height: 45vh; }
+            #map { height: 55vh; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="map-page">
+    <div class="map-sidebar">
+        <div class="sidebar-header">
+            <a href="dashboard.html" class="back-link"><i class="ph-bold ph-arrow-left"></i> Dashboard</a>
+            <h1><i class="ph-fill ph-map-pin" style="color:#10b981;"></i> Find Workers Near You</h1>
+            <p>Discover verified professionals in your area</p>
+        </div>
+        <div class="filter-bar">
+            <select class="filter-select" id="categoryFilter">
+                <option value="">All Categories</option>
+            </select>
+        </div>
+        <div class="radius-slider">
+            <label>Search Radius: <span class="radius-value" id="radiusLabel">10 km</span></label>
+            <input type="range" id="radiusSlider" min="2" max="50" value="10">
+        </div>
+        <div class="worker-list" id="workerList">
+            <div class="loading-state">
+                <i class="ph-bold ph-circle-notch"></i>
+                <p style="margin-top:10px;">Detecting your location...</p>
+            </div>
+        </div>
+    </div>
+    <div id="map"></div>
+</div>
+
+<script type="module">
+    import { supabase } from '../js/supabase-client.js';
+
+    let map, userMarker, workerMarkers = [], userLat = null, userLng = null, currentRadius = 10;
+    let allWorkers = []; // Cache workers
+    let categoryMap = {};
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        initMap();
+        await loadCategories();
+        
+        document.getElementById('radiusSlider').addEventListener('input', (e) => {
+            currentRadius = parseInt(e.target.value);
+            document.getElementById('radiusLabel').textContent = currentRadius + ' km';
+            filterAndDisplayWorkers();
+        });
+
+        document.getElementById('categoryFilter').addEventListener('change', filterAndDisplayWorkers);
+
+        // Get User Location with fallback
+        const setUserMarker = () => {
+            const userIcon = L.divIcon({
+                className: '',
+                html: '<div style="width:22px;height:22px;background:#3b82f6;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(59,130,246,0.5);"></div>',
+                iconSize: [22, 22], iconAnchor: [11, 11]
+            });
+            
+            if (userMarker) map.removeLayer(userMarker);
+            userMarker = L.marker([userLat, userLng], { icon: userIcon })
+                .addTo(map)
+                .bindPopup('<b>📍 Your Location</b>').openPopup();
+        };
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    userLat = pos.coords.latitude;
+                    userLng = pos.coords.longitude;
+                    map.setView([userLat, userLng], 13);
+                    setUserMarker();
+                    fetchWorkers();
+                },
+                err => {
+                    console.warn('Geolocation denied/timed out, defaulting to Colombo:', err.message);
+                    userLat = 6.9271;
+                    userLng = 79.8612;
+                    map.setView([userLat, userLng], 12);
+                    setUserMarker();
+                    fetchWorkers();
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        } else {
+            userLat = 6.9271;
+            userLng = 79.8612;
+            map.setView([userLat, userLng], 12);
+            setUserMarker();
+            fetchWorkers();
+        }
+    });
+
+    function initMap() {
+        map = L.map('map').setView([7.8731, 80.7718], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+    }
+
+    async function loadCategories() {
+        const { data: categories } = await supabase.from('categories').select('id, name_en');
+        if (categories) {
+            const select = document.getElementById('categoryFilter');
+            categories.forEach(c => {
+                categoryMap[c.id] = c.name_en;
+                select.insertAdjacentHTML('beforeend', `<option value="${c.id}">${c.name_en}</option>`);
+            });
+        }
+    }
+
+    // Haversine distance formula (in km)
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; 
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    async function fetchWorkers() {
+        const { data: profiles, error } = await supabase.from('worker_profiles')
+            .select(`
+                worker_id, category_id, rating, location_lat, location_lng, is_verified,
+                user:users!worker_profiles_worker_id_fkey(id, first_name, last_name, profile_pic)
+            `);
+            
+        if (error) {
+            console.error('Error fetching workers:', error);
+            document.getElementById('workerList').innerHTML = `<div class="empty-state"><i class="ph-fill ph-warning"></i><p>Failed to load workers: ${error.message}</p></div>`;
+            return;
+        }
+
+        allWorkers = (profiles || [])
+            .filter(p => p.user && p.location_lat !== null && p.location_lng !== null)
+            .map(p => ({
+                id: p.user.id,
+                first_name: p.user.first_name,
+                last_name: p.user.last_name,
+                profile_pic: p.user.profile_pic,
+                rating: p.rating || 5.0,
+                location_lat: parseFloat(p.location_lat),
+                location_lng: parseFloat(p.location_lng),
+                profile: { category_id: p.category_id }
+            }));
+
+        filterAndDisplayWorkers();
+    }
+
+    function filterAndDisplayWorkers() {
+        if (!userLat || !userLng) return;
+        
+        workerMarkers.forEach(m => map.removeLayer(m));
+        workerMarkers = [];
+        
+        const list = document.getElementById('workerList');
+        const selectedCat = document.getElementById('categoryFilter').value;
+
+        let filtered = allWorkers.map(w => {
+            const dist = getDistance(userLat, userLng, w.location_lat, w.location_lng);
+            return { ...w, distance: dist };
+        }).filter(w => w.distance <= currentRadius);
+
+        if (selectedCat) {
+            filtered = filtered.filter(w => w.profile && w.profile.category_id == selectedCat);
+        }
+
+        filtered.sort((a, b) => a.distance - b.distance);
+
+        if (filtered.length === 0) {
+            list.innerHTML = '<div class="empty-state"><i class="ph-fill ph-magnifying-glass"></i><p>No workers found in this area.<br>Try increasing the radius.</p></div>';
+        } else {
+            let html = '';
+            filtered.forEach(w => {
+                const initials = (w.first_name[0] + (w.last_name ? w.last_name[0] : '')).toUpperCase();
+                const avatar = w.profile_pic ? `<img src="../${w.profile_pic}">` : initials;
+                const catName = w.profile ? categoryMap[w.profile.category_id] : 'Worker';
+                const distStr = w.distance.toFixed(1);
+                const ratingStr = w.rating ? parseFloat(w.rating).toFixed(1) : '5.0';
+
+                html += `
+                    <div class="worker-card" onclick="window.focusMap(${w.location_lat}, ${w.location_lng})">
+                        <div class="worker-avatar">${avatar}</div>
+                        <div class="worker-info">
+                            <h4>${w.first_name} ${w.last_name}</h4>
+                            <div class="meta">
+                                <span>⭐ ${ratingStr}</span> • <span>${catName || 'Worker'}</span>
+                            </div>
+                        </div>
+                        <div class="worker-distance">${distStr} km<small>away</small></div>
+                    </div>
+                `;
+
+                // Add to map
+                const workerIcon = L.divIcon({
+                    className: '',
+                    html: '<div style="width:18px;height:18px;background:#10b981;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(16,185,129,0.5);"></div>',
+                    iconSize: [18, 18], iconAnchor: [9, 9]
+                });
+
+                const marker = L.marker([w.location_lat, w.location_lng], { icon: workerIcon })
+                    .addTo(map)
+                    .bindPopup(`<b>${w.first_name} ${w.last_name}</b><br>⭐ ${ratingStr} | ${catName}<br>${distStr} km away`);
+                workerMarkers.push(marker);
+            });
+            list.innerHTML = html;
+        }
+
+        // Draw radius circle
+        if (window.radiusCircle) map.removeLayer(window.radiusCircle);
+        window.radiusCircle = L.circle([userLat, userLng], {
+            color: '#10b981', fillColor: '#10b981', fillOpacity: 0.06,
+            radius: currentRadius * 1000, weight: 2
+        }).addTo(map);
+    }
+
+    window.focusMap = function(lat, lng) {
+        map.setView([lat, lng], 15);
+    };
+</script>
+</body>
+</html>

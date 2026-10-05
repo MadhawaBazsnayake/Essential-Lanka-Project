@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Page Not Found - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+    <style>
+        /* 404 Page Specific Styles */
+        body, html { height: 100%; margin: 0; background-color: #f8f6f0; overflow: hidden; }
+        
+        .error-section { display: flex; justify-content: center; align-items: center; min-height: 100vh; position: relative; padding: 20px; }
+        
+        /* Background Blobs (if style.min.css doesn't load them properly here) */
+        .bg-shape { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.5; z-index: 1; }
+        .shape-1 { width: 400px; height: 400px; background: #10b981; top: -100px; left: -100px; }
+        .shape-2 { width: 300px; height: 300px; background: #3b82f6; bottom: -50px; right: -50px; }
+
+        .error-container { max-width: 600px; width: 100%; position: relative; z-index: 10; text-align: center; }
+        
+        .glass-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 25px 50px rgba(0,0,0,0.08); padding: 60px 40px; border-radius: 40px; }
+        
+        .error-code { font-size: 8rem; font-weight: 800; color: #10b981; line-height: 1; margin-bottom: 10px; text-shadow: 4px 4px 0px rgba(16,185,129,0.15); display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .error-code i { font-size: 7rem; color: #1a1a1a; animation: float 3s ease-in-out infinite; }
+        
+        .error-title { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; margin-bottom: 15px; }
+        .error-desc { font-size: 1.1rem; color: #666; margin-bottom: 40px; line-height: 1.6; }
+        
+        .btn-home { background: #1a1a1a; color: white; padding: 18px 35px; border-radius: 50px; font-weight: 800; text-decoration: none; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15); width: 100%; max-width: 300px; }
+        .btn-home:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.25); background: #000000; }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @media (max-width: 768px) {
+            .error-code { font-size: 6rem; }
+            .error-code i { font-size: 5rem; }
+            .error-title { font-size: 1.8rem; }
+            .glass-box { padding: 40px 25px; border-radius: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-shape shape-1"></div>
+<div class="bg-shape shape-2"></div>
+
+<section class="error-section">
+    <div class="error-container">
+        <div class="glass-box glass-premium fade-up show">
+            
+            <div class="error-code">
+                4<i class="ph-fill ph-ghost"></i>4
+            </div>
+            
+            <h1 class="error-title">Oops! Page Not Found</h1>
+            <p class="error-desc">The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
+            
+            <!-- Go back to homepage or login based on your setup -->
+            <a href="index.html" class="btn-home">
+                <i class="ph-bold ph-house"></i> Back to Homepage
+            </a>
+            
+        </div>
+    </div>
+</section>
+
+</body>
+</html>
+

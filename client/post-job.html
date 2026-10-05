@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a New Service - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Leaflet.js for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .page-section { padding: 50px 5%; min-height: 85vh; position: relative; }
+        .page-container { max-width: 800px; margin: 0 auto; position: relative; z-index: 10; }
+        .header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; color: #666; text-decoration: none; font-weight: 700; transition: 0.3s; font-size: 1.05rem; }
+        .back-btn:hover { color: #10b981; }
+        .page-title { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; }
+        .glass-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 40px rgba(0,0,0,0.06); padding: 45px 40px; border-radius: 35px; }
+        .form-group { margin-bottom: 22px; text-align: left; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; color: #1a1a1a; }
+        .form-control { width: 100%; padding: 15px 20px; border-radius: 18px; border: 2px solid #e5dfd5; background: #ffffff; font-size: 1rem; transition: 0.3s; outline: none; font-weight: 500; box-sizing: border-box; font-family: inherit; }
+        .form-control:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
+        .form-control:disabled { background: #f8f9fa; color: #aaa; cursor: not-allowed; }
+        textarea.form-control { resize: vertical; min-height: 120px; }
+        select.form-control { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%231a1a1a" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>'); background-repeat: no-repeat; background-position: right 20px center; padding-right: 45px; cursor: pointer; }
+        .location-card { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #bbf7d0; border-radius: 22px; padding: 22px; margin-bottom: 22px; }
+        .location-card .label-row { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.95rem; color: #1a1a1a; margin-bottom: 14px; }
+        .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .district-loading { color: #10b981; font-size: 0.85rem; font-weight: 600; display: none; margin-top: 6px; }
+        .map-section { margin-top: 18px; border-radius: 16px; overflow: hidden; border: 2px solid #86efac; position: relative; }
+        .map-toolbar { background: white; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #bbf7d0; }
+        .map-toolbar span { font-size: 0.82rem; font-weight: 600; color: #064e3b; display: flex; align-items: center; gap: 6px; }
+        #map-pin-display { font-size: 0.78rem; color: #10b981; font-weight: 700; }
+        .btn-gps { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 7px 14px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.3s; }
+        .btn-gps:hover { transform: scale(1.04); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+        .btn-gps:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        #jobMap { height: 300px; width: 100%; }
+        .d-flex-gap { display: flex; gap: 20px; }
+        .d-flex-gap .form-group { flex: 1; }
+        .btn-submit { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 18px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; transition: 0.3s; width: 100%; font-size: 1.15rem; box-shadow: 0 10px 25px rgba(16,185,129,0.2); margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(16,185,129,0.3); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        @media (max-width: 768px) { .d-flex-gap { flex-direction: column; gap: 0; } .glass-box { padding: 30px 20px; } .header-action { flex-direction: column; align-items: flex-start; gap: 15px; } .location-grid { grid-template-columns: 1fr; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeSlideIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="page-section bg-cream">
+    <div class="mesh-bg"></div>
+    <div class="page-container">
+        <div class="header-action fade-up show">
+            <h1 class="page-title">Request a Service</h1>
+            <a href="dashboard.html" class="back-btn"><i class="ph-bold ph-arrow-left"></i> Back to Dashboard</a>
+        </div>
+        <div class="glass-box glass-premium fade-up show" style="transition-delay: 100ms;">
+            <p style="color: #666; margin-bottom: 30px; font-size: 1.05rem;">Fill in the details below to broadcast your request to verified workers in your area.</p>
+
+            <form id="jobForm">
+                <input type="hidden" name="location_lat" id="location_lat" value="">
+                <input type="hidden" name="location_lng" id="location_lng" value="">
+
+                <div class="form-group">
+                    <label>Job Title / Summary</label>
+                    <input type="text" name="title" class="form-control" placeholder="E.g. Need a plumber to fix a leaking pipe" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Service Category</label>
+                    <select name="category_id" id="categorySelect" class="form-control" required>
+                        <option value="" disabled selected>Loading categories...</option>
+                    </select>
+                </div>
+
+                <div class="location-card">
+                    <div class="label-row"><i class="ph-fill ph-map-pin" style="color:#10b981; font-size:1.2rem;"></i> Service Location</div>
+                    <div class="location-grid">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Province</label>
+                            <select name="province" id="provinceSelect" class="form-control" required>
+                                <option value="" disabled selected>Select Province...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>District</label>
+                            <select name="district" id="districtSelect" class="form-control" required disabled>
+                                <option value="" disabled selected>Select Province first...</option>
+                            </select>
+                            <div class="district-loading" id="districtLoading"><i class="ph-bold ph-spinner-gap"></i> Loading districts...</div>
+                        </div>
+                    </div>
+
+                    <div class="map-section">
+                        <div class="map-toolbar">
+                            <span><i class="ph-fill ph-map-trifold" style="color:#10b981;"></i> Pin your exact location</span>
+                            <button type="button" class="btn-gps" id="gpsBtn"><i class="ph-bold ph-crosshair"></i> Use My GPS</button>
+                        </div>
+                        <div id="jobMap"></div>
+                        <div id="map-pin-display" style="padding: 8px 14px; font-size: 0.78rem; color: #64748b; background: #f0fdf4;">
+                            <i class="ph-fill ph-info" style="color:#10b981;"></i> Click on the map to drop your location pin.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Full Service Address</label>
+                    <input type="text" name="address" id="addressInput" class="form-control" placeholder="House No, Street, City" required>
+                </div>
+
+                <div class="d-flex-gap">
+                    <div class="form-group">
+                        <label>Preferred Date</label>
+                        <input type="date" name="job_date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Preferred Time</label>
+                        <input type="time" name="job_time" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Estimated Budget (Rs.)</label>
+                    <input type="number" name="budget" class="form-control" placeholder="e.g. 3500" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Detailed Description</label>
+                    <textarea name="description" class="form-control" placeholder="Describe the issue or task in detail..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Upload Images (Max 2)</label>
+                    <input type="file" id="jobImages" class="form-control" accept="image/*" multiple style="padding: 10px;">
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">Images will be automatically compressed to save data.</div>
+                    <div id="imagePreview" style="display: flex; gap: 10px; margin-top: 10px;"></div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="ph-bold ph-paper-plane-tilt"></i> Broadcast Job Request
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script type="module">
+    import { loadLayout } from '../js/layout.js';
+    import { supabase } from '../js/supabase-client.js';
+    import { sendJobPublishedEmail } from '../js/email-service.js';
+
+    let userId = null;
+    let currentUserProfile = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout('nav-dashboard');
+
+        // Authentication Check
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            window.location.href = '../login.html';
+            return;
+        }
+
+        const { data: profile, error } = await supabase.from('users').select('*').eq('auth_id', session.user.id).single();
+        if (error || !profile || profile.role !== 'client') {
+            window.location.href = '../login.html';
+            return;
+        }
+
+        userId = profile.id;
+        currentUserProfile = profile;
+        document.getElementById('addressInput').value = session.user.user_metadata?.address || '';
+
+        // Load Categories
+        const { data: categories } = await supabase.from('categories').select('id, name_en');
+        const catSelect = document.getElementById('categorySelect');
+        catSelect.innerHTML = '<option value="" disabled selected>Select a category...</option>';
+        if (categories) {
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name_en;
+                catSelect.appendChild(opt);
+            });
+        }
+    });
+
+    const sriLankaLocations = {
+        'Western': ['Colombo', 'Gampaha', 'Kalutara'],
+        'Central': ['Kandy', 'Matale', 'Nuwara Eliya'],
+        'Southern': ['Galle', 'Matara', 'Hambantota'],
+        'Northern': ['Jaffna', 'Kilinochchi', 'Mannar', 'Mullaitivu', 'Vavuniya'],
+        'Eastern': ['Ampara', 'Batticaloa', 'Trincomalee'],
+        'North Western': ['Kurunegala', 'Puttalam'],
+        'North Central': ['Anuradhapura', 'Polonnaruwa'],
+        'Uva': ['Badulla', 'Monaragala'],
+        'Sabaragamuwa': ['Ratnapura', 'Kegalle']
+    };
+
+    const provSelect = document.getElementById('provinceSelect');
+    Object.keys(sriLankaLocations).forEach(prov => {
+        const opt = document.createElement('option');
+        opt.value = prov; opt.textContent = prov;
+        provSelect.appendChild(opt);
+    });
+
+    provSelect.addEventListener('change', (e) => {
+        const province = e.target.value;
+        const districtSelect = document.getElementById('districtSelect');
+        const loading = document.getElementById('districtLoading');
+        
+        districtSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+        districtSelect.disabled = true;
+        loading.style.display = 'block';
+
+        setTimeout(() => {
+            const districts = sriLankaLocations[province] || [];
+            districtSelect.innerHTML = '<option value="" disabled selected>Select District...</option>';
+            districts.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d; opt.textContent = d;
+                districtSelect.appendChild(opt);
+            });
+            districtSelect.disabled = false;
+            loading.style.display = 'none';
+        }, 200);
+    });
+
+    // MAP LOGIC
+    let map, marker;
+    const SRI_LANKA_CENTER = [7.8731, 80.7718];
+
+    function initMap() {
+        map = L.map('jobMap').setView(SRI_LANKA_CENTER, 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        
+        map.on('click', function(e) { setPin(e.latlng.lat, e.latlng.lng); });
+    }
+
+    function setPin(lat, lng) {
+        const greenIcon = L.divIcon({
+            className: '',
+            html: `<div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:linear-gradient(135deg,#10b981,#059669);transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 12px rgba(16,185,129,0.5);"></div>`,
+            iconSize: [36, 36], iconAnchor: [18, 36]
+        });
+        if (marker) marker.setLatLng([lat, lng]);
+        else {
+            marker = L.marker([lat, lng], { icon: greenIcon, draggable: true }).addTo(map);
+            marker.on('dragend', (ev) => {
+                const pos = ev.target.getLatLng();
+                updateLatLng(pos.lat, pos.lng);
+            });
+        }
+        updateLatLng(lat, lng);
+        map.setView([lat, lng], 15, { animate: true });
+    }
+
+    function updateLatLng(lat, lng) {
+        document.getElementById('location_lat').value = lat.toFixed(7);
+        document.getElementById('location_lng').value = lng.toFixed(7);
+        document.getElementById('map-pin-display').innerHTML = `<i class="ph-fill ph-check-circle" style="color:#10b981;"></i> Location pinned: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }
+
+    document.getElementById('gpsBtn').addEventListener('click', () => {
+        const btn = document.getElementById('gpsBtn');
+        btn.innerHTML = '<i class="ph-bold ph-spinner-gap" style="animation:spin 1s linear infinite;"></i> Locating...';
+        btn.disabled = true;
+        if (!navigator.geolocation) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Geolocation not supported.' });
+            btn.innerHTML = '<i class="ph-bold ph-crosshair"></i> Use My GPS';
+            btn.disabled = false;
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                setPin(pos.coords.latitude, pos.coords.longitude);
+                btn.innerHTML = '<i class="ph-fill ph-check-circle"></i> Location Set!';
+                setTimeout(() => { btn.innerHTML = '<i class="ph-bold ph-crosshair"></i> Use My GPS'; btn.disabled = false; }, 2000);
+            },
+            () => {
+                Swal.fire({ icon: 'warning', text: 'Location access denied. Please click on the map.' });
+                btn.innerHTML = '<i class="ph-bold ph-crosshair"></i> Use My GPS';
+                btn.disabled = false;
+            }
+        );
+    });
+
+    document.addEventListener('DOMContentLoaded', initMap);
+
+    // Compress Image Logic
+    async function compressImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1200;
+                    const MAX_HEIGHT = 1200;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob((blob) => {
+                        resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+                    }, 'image/jpeg', 0.6); // 0.6 quality for good compression
+                };
+            };
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Image Preview
+    let selectedFiles = [];
+    document.getElementById('jobImages').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        if (files.length > 2) {
+            Swal.fire('Limit Exceeded', 'You can only upload a maximum of 2 images.', 'warning');
+            this.value = '';
+            return;
+        }
+        selectedFiles = files;
+        const preview = document.getElementById('imagePreview');
+        preview.innerHTML = '';
+        files.forEach(file => {
+            const url = URL.createObjectURL(file);
+            preview.innerHTML += `<img src="${url}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 10px; border: 2px solid #e5dfd5;">`;
+        });
+    });
+
+    // Form Submission
+    document.getElementById('jobForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = '<i class="ph-bold ph-spinner-gap" style="animation:spin 1s linear infinite;"></i> Posting...';
+        btn.disabled = true;
+
+        const formData = new FormData(this);
+        const lat = formData.get('location_lat');
+        const lng = formData.get('location_lng');
+        if(!lat || !lng) {
+            Swal.fire({ icon: 'warning', text: 'Please drop a pin on the map to set the job location.' });
+            btn.innerHTML = '<i class="ph-bold ph-paper-plane-tilt"></i> Broadcast Job Request';
+            btn.disabled = false;
+            return;
+        }
+
+        try {
+            // Upload images if selected
+            let image_1_url = null;
+            let image_2_url = null;
+            
+            if (selectedFiles.length > 0) {
+                btn.innerHTML = '<i class="ph-bold ph-spinner-gap" style="animation:spin 1s linear infinite;"></i> Compressing & Uploading...';
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const compressedFile = await compressImage(selectedFiles[i]);
+                    const fileExt = compressedFile.name.split('.').pop();
+                    const fileName = `${Date.now()}_${i}.${fileExt}`;
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from('job_images')
+                        .upload(fileName, compressedFile);
+                    
+                    if (uploadError) throw uploadError;
+                    
+                    const { data: { publicUrl } } = supabase.storage.from('job_images').getPublicUrl(fileName);
+                    if (i === 0) image_1_url = publicUrl;
+                    if (i === 1) image_2_url = publicUrl;
+                }
+            }
+            
+            btn.innerHTML = '<i class="ph-bold ph-spinner-gap" style="animation:spin 1s linear infinite;"></i> Creating Job...';
+            const { error } = await supabase.from('jobs').insert([{
+                client_id: userId,
+                category_id: parseInt(formData.get('category_id')),
+                title: formData.get('title'),
+                description: formData.get('description'),
+                budget: parseFloat(formData.get('budget')),
+                location_lat: parseFloat(lat),
+                location_lng: parseFloat(lng),
+                province: formData.get('province'),
+                district: formData.get('district'),
+                city: formData.get('address'),
+                status: 'open',
+                image_1: image_1_url,
+                image_2: image_2_url
+            }]);
+
+            if (error) throw error;
+            
+            try {
+                const { data: user } = await supabase.auth.getUser();
+                if (user?.user?.email) {
+                    await sendJobPublishedEmail(user.user.email, formData.get('title'));
+                }
+            } catch(e) { console.error('Email error:', e); }
+
+            await Swal.fire({ icon: 'success', title: 'Job Posted!', text: 'Your request has been broadcast.', confirmButtonColor: '#10b981' });
+            window.location.href = 'dashboard.html';
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Could not post job. Try again.' });
+            btn.innerHTML = '<i class="ph-bold ph-paper-plane-tilt"></i> Broadcast Job Request';
+            btn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>
+

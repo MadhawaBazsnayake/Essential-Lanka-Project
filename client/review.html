@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave a Review - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .page-section { padding: 50px 5%; min-height: 85vh; position: relative; }
+        .page-container { max-width: 700px; margin: 0 auto; position: relative; z-index: 10; }
+        .header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; color: #666; text-decoration: none; font-weight: 700; transition: 0.3s; font-size: 1.05rem; }
+        .back-btn:hover { color: #10b981; }
+        .page-title { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; }
+        .glass-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 40px rgba(0,0,0,0.06); padding: 50px; border-radius: 35px; text-align: center; animation: fadeUp 0.5s ease forwards; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .worker-snippet { display: flex; flex-direction: column; align-items: center; margin-bottom: 35px; padding-bottom: 30px; border-bottom: 2px solid #f0ebe1; }
+        .worker-avatar { width: 80px; height: 80px; border-radius: 50%; background-color: #cbd5e1; border: 4px solid #ffffff; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 15px; display:flex; justify-content:center; align-items:center; overflow:hidden;}
+        .worker-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .worker-snippet h3 { font-size: 1.4rem; font-weight: 800; color: #1a1a1a; margin-bottom: 5px; }
+        .worker-snippet p { font-size: 1rem; color: #666; }
+        .stars-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; direction: rtl; } 
+        .star-btn { font-size: 3rem; color: #e5dfd5; cursor: pointer; transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .stars-container > .star-btn:hover, .stars-container > .star-btn:hover ~ .star-btn,
+        .stars-container.selected > .star-btn.active, .stars-container.selected > .star-btn.active ~ .star-btn { color: #f59e0b; }
+        .star-btn:hover { transform: scale(1.15); }
+        .form-group { margin-bottom: 25px; text-align: left; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 10px; font-size: 1rem; color: #1a1a1a; text-align: center; }
+        .form-control { width: 100%; padding: 20px; border-radius: 20px; border: 2px solid #e5dfd5; background: #ffffff; font-size: 1rem; transition: 0.3s; outline: none; font-weight: 500; resize: vertical; min-height: 120px; font-family: inherit;}
+        .form-control:focus { border-color: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,0.1); }
+        .btn-submit { background: #1a1a1a; color: white; padding: 18px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; transition: 0.3s; width: 100%; font-size: 1.15rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.25); background: #000000; }
+        @media (max-width: 768px) { .glass-box { padding: 35px 20px; } .star-btn { font-size: 2.5rem; } .header-action { flex-direction: column; align-items: flex-start; gap: 15px; } }
+    </style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="page-section bg-cream">
+    <div class="mesh-bg"></div>
+    <div class="page-container">
+        <div class="header-action fade-up show">
+            <h1 class="page-title">Rate the Service</h1>
+            <a href="my-requests.html" class="back-btn"><i class="ph-bold ph-arrow-left"></i> Back to History</a>
+        </div>
+        <div class="glass-box glass-premium fade-up show" style="transition-delay: 100ms;">
+            
+            <div class="worker-snippet" id="workerSnippet">
+                <div class="worker-avatar"><i class="ph-bold ph-spinner-gap" style="animation: spin 1s linear infinite;"></i></div>
+                <h3>Loading...</h3>
+            </div>
+
+            <form id="reviewForm" style="display:none;">
+                <input type="hidden" id="ratingInput" value="0" required>
+                <div class="form-group">
+                    <label>How was your experience?</label>
+                    <div class="stars-container" id="starsContainer">
+                        <i class="ph-fill ph-star star-btn" data-value="5" onclick="setRating(5)"></i>
+                        <i class="ph-fill ph-star star-btn" data-value="4" onclick="setRating(4)"></i>
+                        <i class="ph-fill ph-star star-btn" data-value="3" onclick="setRating(3)"></i>
+                        <i class="ph-fill ph-star star-btn" data-value="2" onclick="setRating(2)"></i>
+                        <i class="ph-fill ph-star star-btn" data-value="1" onclick="setRating(1)"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <textarea id="reviewText" class="form-control" placeholder="Write a few words about the quality of work..." required></textarea>
+                </div>
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="ph-bold ph-paper-plane-tilt"></i> Submit Review
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script type="module">
+    import { loadLayout } from '../js/layout.js';
+    import { supabase } from '../js/supabase-client.js';
+
+    let currentUserId = null;
+    let jobId = null;
+    let workerId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        jobId = urlParams.get('job_id');
+        if (!jobId) { window.location.href = 'my-requests.html'; return; }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('id, role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'client') { window.location.href = '../login.html'; return; }
+
+        currentUserId = profile.id;
+
+        // Verify job and fetch worker
+        const { data: job, error } = await supabase.from('jobs')
+            .select(`
+                id, title, status, assigned_worker_id,
+                worker:users!jobs_assigned_worker_id_fkey(id, first_name, last_name, profile_pic)
+            `)
+            .eq('id', jobId)
+            .eq('client_id', currentUserId)
+            .single();
+
+        if (error || !job) {
+            Swal.fire('Error', 'Job not found or access denied.', 'error').then(() => window.location.href = 'my-requests.html');
+            return;
+        }
+
+        if (job.status !== 'completed') {
+            Swal.fire('Error', 'You can only review completed jobs.', 'error').then(() => window.location.href = 'my-requests.html');
+            return;
+        }
+
+        workerId = job.assigned_worker_id;
+
+        const workerPic = job.worker && job.worker.profile_pic ? `<img src="../${job.worker.profile_pic}">` : `<i class="ph-fill ph-user" style="font-size:2rem; color:#64748b;"></i>`;
+        document.getElementById('workerSnippet').innerHTML = `
+            <div class="worker-avatar">${workerPic}</div>
+            <h3>${job.worker ? job.worker.first_name + ' ' + job.worker.last_name : 'Worker'}</h3>
+            <p>${job.title}</p>
+        `;
+
+        document.getElementById('reviewForm').style.display = 'block';
+
+        document.getElementById('reviewForm').addEventListener('submit', submitReview);
+    });
+
+    window.setRating = function(val) {
+        document.getElementById('ratingInput').value = val;
+        const container = document.getElementById('starsContainer');
+        const stars = container.querySelectorAll('.star-btn');
+        container.classList.add('selected');
+        stars.forEach(s => s.classList.remove('active'));
+        const clicked = container.querySelector(`[data-value="${val}"]`);
+        if(clicked) clicked.classList.add('active');
+    };
+
+    async function submitReview(e) {
+        e.preventDefault();
+        const rating = parseInt(document.getElementById('ratingInput').value);
+        if (rating === 0) {
+            Swal.fire('Wait!', 'Please select a star rating.', 'warning');
+            return;
+        }
+
+        const text = document.getElementById('reviewText').value.trim();
+        const btn = document.getElementById('submitBtn');
+        const ogHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="ph-bold ph-spinner-gap" style="animation: spin 1s linear infinite;"></i> Submitting...';
+        btn.disabled = true;
+
+        const { error } = await supabase.from('reviews').insert([{
+            job_id: jobId,
+            worker_id: workerId,
+            reviewer_id: currentUserId,
+            rating: rating,
+            comment: text
+        }]);
+
+        if (error) {
+            if(error.code === '23505') { // Unique violation if they already reviewed
+                Swal.fire('Already Reviewed', 'You have already submitted a review for this job.', 'info').then(() => window.location.href = 'my-requests.html');
+            } else {
+                Swal.fire('Error', 'Could not submit review. Please try again.', 'error');
+                btn.innerHTML = ogHTML;
+                btn.disabled = false;
+            }
+        } else {
+            Swal.fire('Review Submitted', 'Thank you for your feedback!', 'success').then(() => window.location.href = 'my-requests.html');
+        }
+    }
+</script>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</body>
+</html>
+
