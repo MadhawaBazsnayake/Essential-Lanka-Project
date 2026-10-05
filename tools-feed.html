@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Rental - Essential Lanka</title>
+    <meta name="theme-color" content="#10b981">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+    <style>
+        .tools-hero { background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%); color: white; padding: 65px 5% 50px; border-radius: 0 0 40px 40px; position: relative; overflow: hidden; }
+        .tools-hero::after { content: ''; position: absolute; top: -50%; right: -10%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+        .search-filter-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 24px; padding: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); margin-top: -35px; position: relative; z-index: 10; }
+        .tool-card { background: white; border-radius: 24px; overflow: hidden; border: 1px solid #f3f4f6; box-shadow: 0 10px 30px rgba(0,0,0,0.04); transition: all 0.3s; display: flex; flex-direction: column; height: 100%; animation: fadeUp 0.5s ease forwards; }
+        .tool-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); border-color: rgba(16,185,129,0.3); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .tool-img-container { height: 210px; position: relative; background: #f9fafb; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .tool-img-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .tool-card:hover .tool-img-container img { transform: scale(1.05); }
+        .status-badge { position: absolute; top: 15px; right: 15px; padding: 6px 14px; border-radius: 50px; font-size: 0.82rem; font-weight: 700; backdrop-filter: blur(10px); letter-spacing: 0.5px; }
+        .status-badge.available { background: rgba(16, 185, 129, 0.9); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+        .status-badge.rented { background: rgba(239, 68, 68, 0.9); color: white; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+        .tool-body { padding: 24px; display: flex; flex-direction: column; flex-grow: 1; }
+        .price-tag { font-size: 1.4rem; font-weight: 800; color: #059669; }
+        .price-tag span { font-size: 0.85rem; color: #6b7280; font-weight: 500; }
+        .btn-rent { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 50px; padding: 12px 24px; font-weight: 700; width: 100%; cursor: pointer; transition: all 0.3s; box-shadow: 0 6px 18px rgba(16,185,129,0.25); }
+        .btn-rent:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(16,185,129,0.35); }
+        .btn-rent:disabled { background: #d1d5db; color: #6b7280; box-shadow: none; cursor: not-allowed; }
+        .loading-spinner { text-align: center; padding: 50px; color: #64748b; grid-column: 1 / -1; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<!-- Hero Section -->
+<section class="tools-hero text-center">
+    <div style="max-width: 800px; margin: 0 auto;">
+        <span style="background: rgba(255,255,255,0.15); padding: 8px 18px; border-radius: 50px; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            🛠️ Equipment & Tool Sharing
+        </span>
+        <h1 style="font-size: 2.8rem; font-weight: 800; margin: 18px 0 12px; letter-spacing: -1px;">
+            Tool Sharing Mini-Market
+        </h1>
+        <p style="font-size: 1.15rem; opacity: 0.9; line-height: 1.6;">
+            Rent heavy-duty drills, concrete mixers, generators & construction equipment directly from verified local owners and fellow workers at affordable daily rates.
+        </p>
+        <div style="margin-top: 25px;">
+            <a href="login.html" class="btn-primary-custom" style="background: white; color: #047857; text-decoration: none; padding: 12px 28px; border-radius: 50px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                <i class="ph-bold ph-plus-circle" style="font-size: 1.2rem;"></i> List Your Equipment for Rent
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Main Container -->
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px 80px;">
+
+    <!-- Filter Card -->
+    <div class="search-filter-card">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: center;">
+            <div>
+                <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search tools (e.g. Drill, Mixer)..." style="border-radius: 50px; padding: 12px 20px;">
+            </div>
+            <div>
+                <select id="availabilityFilter" class="form-control" style="border-radius: 50px; padding: 12px 20px;">
+                    <option value="">All Availability</option>
+                    <option value="true">🟢 Available Now</option>
+                    <option value="false">🔴 Rented Out</option>
+                </select>
+            </div>
+            <div>
+                <button id="searchBtn" class="btn-rent" style="height: 48px;">Filter Tools</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tools Grid -->
+    <div style="margin-top: 40px;">
+        <div id="toolsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px;">
+            <div class="loading-spinner">
+                <i class="ph-bold ph-spinner" style="font-size: 2rem; animation: spin 1s linear infinite;"></i>
+                <p>Loading tools...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer id="site-footer"></footer>
+
+<script type="module">
+    import { loadLayout } from './js/layout.js';
+    import { supabase } from './js/supabase-client.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout('nav-tools');
+        
+        const toolsGrid = document.getElementById('toolsGrid');
+        const searchInput = document.getElementById('searchInput');
+        const availabilityFilter = document.getElementById('availabilityFilter');
+        const searchBtn = document.getElementById('searchBtn');
+
+        async function loadTools() {
+            toolsGrid.innerHTML = `<div class="loading-spinner"><i class="ph-bold ph-spinner" style="font-size: 2rem; animation: spin 1s linear infinite;"></i><p>Loading tools...</p></div>`;
+            
+            let query = supabase.from('tools').select('*, owner:users!tools_provider_id_fkey(first_name, last_name)').order('created_at', { ascending: false });
+
+            const search = searchInput.value;
+            const avail = availabilityFilter.value;
+
+            if (search) query = query.ilike('title', `%${search}%`);
+            if (avail !== '') query = query.eq('is_available', avail === 'true');
+
+            const { data: tools, error } = await query;
+            
+            if (error) {
+                console.error("Error loading tools", error);
+                toolsGrid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: red;">Failed to load tools: ${error.message}</div>`;
+                return;
+            }
+
+            if (!tools || tools.length === 0) {
+                toolsGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: white; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+                        <i class="ph-duotone ph-wrench" style="font-size: 4rem; color: #d1d5db; margin-bottom: 15px; display: block;"></i>
+                        <h3 style="color: #374151; font-weight: 700;">No tools found matching your criteria</h3>
+                        <p style="color: #6b7280; margin-top: 8px;">Try clearing filters or search for another equipment name.</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            tools.forEach(tool => {
+                const isAvail = tool.is_available;
+                const statusBadge = isAvail ? `<span class="status-badge available">Available</span>` : `<span class="status-badge rented">Rented</span>`;
+                const btn = isAvail 
+                    ? `<button class="btn-rent" onclick="window.rentTool(${tool.id}, '${tool.title.replace(/'/g, "\\'")}', ${tool.daily_rate})">Rent Equipment</button>` 
+                    : `<button class="btn-rent" disabled>Currently Rented Out</button>`;
+                const imgHtml = tool.image_path ? `<img src="${tool.image_path}" alt="${tool.title}">` : `<i class="ph-duotone ph-wrench" style="font-size: 5rem; color: #9ca3af;"></i>`;
+                
+                const ownerName = tool.owner?.first_name ? `${tool.owner.first_name} ${tool.owner.last_name || ''}`.trim() : 'Verified Owner';
+
+                html += `
+                    <div class="tool-card">
+                        <div class="tool-img-container">
+                            ${imgHtml}
+                            ${statusBadge}
+                        </div>
+                        <div class="tool-body">
+                            <h3 style="font-size: 1.25rem; font-weight: 800; color: #111827; margin-bottom: 8px;">${tool.title}</h3>
+                            <p style="color: #6b7280; font-size: 0.92rem; line-height: 1.5; margin-bottom: 15px; flex-grow: 1;">${tool.description || 'No description provided.'}</p>
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 15px; border-top: 1px solid #f3f4f6; margin-bottom: 18px;">
+                                <div>
+                                    <div class="price-tag">Rs. ${parseFloat(tool.daily_rate).toLocaleString()} <span>/ day</span></div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.85rem; font-weight: 700; color: #374151;">
+                                        <i class="ph-bold ph-map-pin" style="color: #10b981;"></i> ${tool.location || 'N/A'}
+                                    </div>
+                                    <div style="font-size: 0.78rem; color: #9ca3af;">By: ${ownerName}</div>
+                                </div>
+                            </div>
+                            ${btn}
+                        </div>
+                    </div>`;
+            });
+            toolsGrid.innerHTML = html;
+        }
+
+        window.rentTool = async function(toolId, toolTitle, dailyRate) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                Swal.fire({
+                    title: 'Login Required',
+                    text: 'Please log in to your account to rent equipment.',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Log In',
+                    confirmButtonColor: '#10b981'
+                }).then((res) => {
+                    if (res.isConfirmed) window.location.href = 'login.html';
+                });
+                return;
+            }
+
+            const { data: user } = await supabase.from('users').select('id, role').eq('auth_id', session.user.id).single();
+            if (!user) {
+                Swal.fire('Error', 'User profile not found.', 'error');
+                return;
+            }
+
+            const { value: formValues } = await Swal.fire({
+                title: `Rent ${toolTitle}`,
+                html: `
+                    <div style="text-align: left; font-size: 0.95rem; margin-top: 15px;">
+                        <p style="margin-bottom: 10px; color: #64748b;">Daily Rate: <b style="color: #059669;">Rs. ${dailyRate.toLocaleString()}</b></p>
+                        <label style="font-weight: 700; display: block; margin-bottom: 5px;">Rental Duration (Days):</label>
+                        <input id="swal-days" type="number" min="1" max="60" value="1" class="swal2-input" style="width: 80%; margin: 0 auto 15px;">
+                        <p id="swal-total" style="font-size: 1.1rem; font-weight: 800; color: #1e293b; text-align: center;">Total: Rs. ${dailyRate.toLocaleString()}</p>
+                    </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'Confirm Rental Request',
+                confirmButtonColor: '#10b981',
+                didOpen: () => {
+                    const daysInput = document.getElementById('swal-days');
+                    const totalEl = document.getElementById('swal-total');
+                    daysInput.addEventListener('input', () => {
+                        const days = parseInt(daysInput.value) || 1;
+                        totalEl.textContent = `Total: Rs. ${(days * dailyRate).toLocaleString()}`;
+                    });
+                },
+                preConfirm: () => {
+                    const days = parseInt(document.getElementById('swal-days').value);
+                    if (!days || days < 1) {
+                        Swal.showValidationMessage('Please enter at least 1 day');
+                        return false;
+                    }
+                    return { days, total: days * dailyRate };
+                }
+            });
+
+            if (formValues) {
+                const { error: rentErr } = await supabase.from('tool_rentals').insert([{
+                    tool_id: toolId,
+                    renter_id: user.id,
+                    days_count: formValues.days,
+                    total_price: formValues.total,
+                    status: 'pending'
+                }]);
+
+                if (rentErr) {
+                    console.error(rentErr);
+                    Swal.fire('Error', `Failed to submit request: ${rentErr.message}`, 'error');
+                } else {
+                    Swal.fire({
+                        title: 'Request Sent!',
+                        text: `Your rental request for ${toolTitle} has been submitted to the provider.`,
+                        icon: 'success',
+                        confirmButtonColor: '#10b981'
+                    });
+                }
+            }
+        };
+
+        searchBtn.addEventListener('click', loadTools);
+        searchInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') loadTools(); });
+        availabilityFilter.addEventListener('change', loadTools);
+
+        await loadTools();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background: #f5f0eb; font-family: 'Inter', sans-serif; margin: 0; }
+        .page-wrap { max-width: 860px; margin: 0 auto; padding: 50px 20px; }
+        .page-header { display: flex; align-items: center; gap: 15px; margin-bottom: 35px; }
+        .page-header h1 { font-size: 2rem; font-weight: 800; color: #1a1a1a; margin: 0; }
+        .back-btn { display: inline-flex; align-items: center; gap: 6px; color: #666; text-decoration: none; font-weight: 600; transition: color 0.2s; }
+        .back-btn:hover { color: #10b981; }
+        .pay-card { background: #fff; border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); border: 1.5px solid #f0ebe1; padding: 28px 30px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; transition: 0.25s; animation: fadeUp 0.5s ease forwards; }
+        .pay-card:hover { border-color: #10b981; box-shadow: 0 12px 40px rgba(16,185,129,0.08); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .worker-info { display: flex; align-items: center; gap: 14px; }
+        .avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; background: #e5dfd5; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; color: #666; flex-shrink: 0; overflow: hidden; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .job-title { font-size: 1.1rem; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+        .worker-name { font-size: 0.88rem; color: #666; }
+        .pay-amount { text-align: center; }
+        .pay-amount .label { font-size: 0.78rem; color: #999; font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
+        .pay-amount .value { font-size: 1.6rem; font-weight: 800; color: #1a1a1a; }
+        .pay-actions { display: flex; flex-direction: column; gap: 10px; min-width: 170px; }
+        .btn-pay { background: linear-gradient(135deg, #0070ba, #003087); color: white; border: none; padding: 13px 22px; border-radius: 50px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.25s; box-shadow: 0 8px 20px rgba(0,112,186,0.25); }
+        .btn-pay:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,112,186,0.35); }
+        .btn-pay:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+        .btn-paid { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 13px 22px; border-radius: 50px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; }
+        .badge-pending  { background: rgba(245,158,11,0.1); color: #d97706; }
+        .badge-paid     { background: rgba(16,185,129,0.1); color: #10b981; }
+        .badge-progress { background: rgba(59,130,246,0.1); color: #3b82f6; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #64748b; }
+        .empty-state i { font-size: 4rem; color: #cbd5e1; margin-bottom: 15px; display: block; }
+        @media(max-width: 600px) { .pay-card { flex-direction: column; } .pay-actions { width: 100%; } }
+    </style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<div class="page-wrap">
+    <div class="page-header">
+        <a href="dashboard.html" class="back-btn"><i class="ph-bold ph-arrow-left"></i> Back</a>
+        <h1><i class="ph-fill ph-credit-card" style="color:#0070ba;"></i> Payments</h1>
+    </div>
+
+    <div id="paymentsContainer">
+        <div style="text-align:center; padding: 40px; color: #64748b;">
+            <i class="ph-bold ph-spinner-gap" style="animation: spin 1s linear infinite; font-size: 2rem;"></i>
+            <p>Loading payments...</p>
+        </div>
+    </div>
+</div>
+
+<footer id="site-footer"></footer>
+
+<script type="module">
+    import { loadLayout } from '../js/layout.js';
+    import { supabase } from '../js/supabase-client.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout();
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('id, role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'client') { window.location.href = '../login.html'; return; }
+
+        const userId = profile.id;
+
+        // Fetch jobs that have accepted bids
+        const { data: jobs, error } = await supabase.from('jobs')
+            .select(`
+                id, title, status, accepted_bid_amount, assigned_worker_id,
+                worker:users!jobs_assigned_worker_id_fkey(first_name, last_name, profile_pic),
+                payments(id, status, created_at)
+            `)
+            .eq('client_id', userId)
+            .not('accepted_bid_amount', 'is', null)
+            .order('created_at', { ascending: false });
+
+        const container = document.getElementById('paymentsContainer');
+
+        if (error) {
+            console.error(error);
+            container.innerHTML = `<div style="text-align:center; color:#ef4444;">Failed to load payments: ${error.message}</div>`;
+            return;
+        }
+
+        if (!jobs || jobs.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="ph-fill ph-receipt"></i>
+                    <h3>No Accepted Bids Yet</h3>
+                    <p>When a worker's bid is accepted for your job, it will appear here for payment.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        jobs.forEach(job => {
+            const payment = job.payments && job.payments.length > 0 ? job.payments[0] : null;
+            const isPaid = payment && payment.status === 'completed';
+            
+            const workerName = job.worker ? `${job.worker.first_name} ${job.worker.last_name}` : 'Assigned Worker';
+            const workerPic = job.worker && job.worker.profile_pic ? `<img src="../${job.worker.profile_pic}">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">${workerName.charAt(0)}</div>`;
+            
+            let statusBadge = '';
+            if (isPaid) {
+                statusBadge = `<span class="status-badge badge-paid"><i class="ph-fill ph-check-circle"></i> Paid</span>`;
+            } else if (job.status === 'in_progress') {
+                statusBadge = `<span class="status-badge badge-progress"><i class="ph-fill ph-spinner-gap" style="animation: spin 2s linear infinite;"></i> In Progress</span>`;
+            } else {
+                statusBadge = `<span class="status-badge badge-pending"><i class="ph-fill ph-clock"></i> Awaiting Payment</span>`;
+            }
+
+            let actionsHtml = '';
+            if (isPaid) {
+                actionsHtml = `
+                    <button class="btn-paid" disabled><i class="ph-bold ph-check"></i> Payment Complete</button>
+                    <small style="text-align:center; color:#999; font-size:0.75rem;">${new Date(payment.created_at).toLocaleDateString()}</small>
+                `;
+            } else {
+                actionsHtml = `
+                    <button class="btn-pay" onclick="window.payJob(${job.id}, ${job.accepted_bid_amount}, ${job.assigned_worker_id || 'null'}, this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 0 0-.794.68l-.04.22-.63 3.993-.032.17a.804.804 0 0 1-.794.679H7.72a.483.483 0 0 1-.477-.558L7.418 21h1.518l.95-6.02h1.385c4.678 0 7.75-2.203 8.796-6.502zm-2.96-5.09c.762.868.983 1.81.752 3.285-.019.123-.04.24-.062.36.88.45 1.4 1.168 1.594 2.124.013.07.024.14.034.21-.004-.037-.008-.074-.013-.11-.196-1.13-.847-1.9-1.945-2.4.22-1.43-.01-2.434-.703-3.376C16.17 2.47 14.856 2 13 2c-1.97 0-3.55.68-4.69 1.824C9.495 2.77 10.902 2 12.6 2c1.75 0 3.134.48 4.108 1.388zM6.5 9.04C6.5 6.234 8.734 4 11.54 4c2.11 0 3.433.61 4.27 1.69.77 1.0.935 2.027.634 3.358C14.913 12.348 12.845 14 9.558 14H7.8c-.47 0-.866.34-.938.803l-.967 6.13A.483.483 0 0 1 5.418 21H2.507a.483.483 0 0 1-.477-.558l2.4-15.2A.805.805 0 0 1 5.224 4.6H8.66l-.16 1.014A4.5 4.5 0 0 0 6.5 9.04z"/></svg>
+                        Pay Rs. ${parseFloat(job.accepted_bid_amount).toLocaleString()}
+                    </button>
+                `;
+            }
+
+            html += `
+                <div class="pay-card" id="pay-card-${job.id}">
+                    <div class="worker-info">
+                        <div class="avatar">${workerPic}</div>
+                        <div>
+                            <div class="job-title">${job.title}</div>
+                            <div class="worker-name"><i class="ph-fill ph-user"></i> ${workerName}</div>
+                            <div style="margin-top:6px;" id="badge-container-${job.id}">
+                                ${statusBadge}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pay-amount">
+                        <div class="label">Amount</div>
+                        <div class="value">Rs. ${parseFloat(job.accepted_bid_amount).toLocaleString()}</div>
+                    </div>
+                    <div class="pay-actions" id="actions-container-${job.id}">
+                        ${actionsHtml}
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+        // Payment function
+        window.payJob = async function(jobId, amount, workerId, btn) {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="ph-bold ph-spinner-gap" style="animation: spin 1s linear infinite;"></i> Processing...';
+            btn.disabled = true;
+
+            const paymentPayload = {
+                job_id: jobId,
+                client_id: userId,
+                worker_id: workerId || null,
+                amount: amount,
+                currency: 'LKR',
+                status: 'completed',
+                payment_method: 'paypal'
+            };
+
+            const { error: payErr } = await supabase.from('payments').insert([paymentPayload]);
+
+            if (payErr) {
+                console.error(payErr);
+                Swal.fire('Error', `Payment processing failed: ${payErr.message}`, 'error');
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                return;
+            }
+
+            // Update job to completed
+            await supabase.from('jobs').update({ status: 'completed' }).eq('id', jobId);
+
+            Swal.fire('Payment Successful!', 'Your payment was processed successfully.', 'success');
+            
+            document.getElementById(`badge-container-${jobId}`).innerHTML = `<span class="status-badge badge-paid"><i class="ph-fill ph-check-circle"></i> Paid</span>`;
+            document.getElementById(`actions-container-${jobId}`).innerHTML = `
+                <button class="btn-paid" disabled><i class="ph-bold ph-check"></i> Payment Complete</button>
+                <small style="text-align:center; color:#999; font-size:0.75rem;">Just now</small>
+            `;
+        };
+    });
+</script>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</body>
+</html>

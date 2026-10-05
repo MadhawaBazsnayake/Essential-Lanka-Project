@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Jobs | Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+            --dark: #111827;
+            --gray: #F3F4F6;
+            --text-main: #374151;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9FAFB;
+            margin: 0;
+            padding: 20px;
+            color: var(--text-main);
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card {
+            background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 15px; border-left: 5px solid var(--primary);
+        }
+        .stat-card i { font-size: 32px; color: var(--primary); }
+        .stat-info h4 { margin: 0; font-size: 14px; color: #6B7280; text-transform: uppercase; }
+        .stat-info h2 { margin: 5px 0 0; font-size: 24px; color: var(--dark); font-weight: 800; }
+        
+        .filter-bar {
+            background: #fff; padding: 15px; border-radius: 12px; display: flex; gap: 15px; margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex-wrap: wrap;
+        }
+        .filter-bar input, .filter-bar select {
+            padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; outline: none; flex: 1; min-width: 150px; font-family: inherit;
+        }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+            color: #fff; display: inline-flex; align-items: center; gap: 5px; transition: 0.3s; text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); }
+        .btn-primary:hover { background: #4338CA; }
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .btn-warning { background: var(--warning); color: #000; }
+        
+        .table-container { background: #fff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #E5E7EB; vertical-align: middle; }
+        th { background: #F9FAFB; font-weight: 600; color: #4B5563; }
+        tr:hover { background: #F3F4F6; }
+        
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-align: center; white-space: nowrap; text-transform: capitalize; }
+        .badge.open { background: #DBEAFE; color: #1E40AF; }
+        .badge.in_progress { background: #FEF3C7; color: #92400E; }
+        .badge.completed { background: #D1FAE5; color: #065F46; }
+        .badge.cancelled { background: #FEE2E2; color: #991B1B; }
+        
+        .action-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .action-btns button { padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+
+        .pagination { display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2 style="margin: 0;"><i class="ph-fill ph-briefcase"></i> Job Management</h2>
+        <a href="dashboard.html" class="btn btn-primary"><i class="ph ph-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="ph-fill ph-folders"></i>
+            <div class="stat-info"><h4>Total Jobs Posted</h4><h2 id="statTotal">0</h2></div>
+        </div>
+        <div class="stat-card" style="border-color: var(--info);">
+            <i class="ph-fill ph-door-open"></i>
+            <div class="stat-info"><h4>Open Jobs</h4><h2 id="statOpen">0</h2></div>
+        </div>
+        <div class="stat-card" style="border-color: var(--warning);">
+            <i class="ph-fill ph-clock-clockwise"></i>
+            <div class="stat-info"><h4>In Progress</h4><h2 id="statActive">0</h2></div>
+        </div>
+        <div class="stat-card" style="border-color: var(--success);">
+            <i class="ph-fill ph-check-circle"></i>
+            <div class="stat-info"><h4>Completed</h4><h2 id="statCompleted">0</h2></div>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="Search Job Title or Client Name...">
+        <select id="statusFilter">
+            <option value="">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+        <button type="button" class="btn btn-primary" onclick="window.applyFilters()"><i class="ph ph-magnifying-glass"></i> Filter</button>
+        <button type="button" class="btn btn-warning" onclick="window.resetFilters()"><i class="ph ph-arrows-clockwise"></i> Reset</button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Job ID</th>
+                    <th>Title</th>
+                    <th>Client</th>
+                    <th>Assigned Worker</th>
+                    <th>Budget</th>
+                    <th>Status</th>
+                    <th>Posted Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="jobsTableBody">
+                <tr><td colspan="8" style="text-align:center; padding:30px; color: #6B7280;">Loading jobs...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination" id="paginationControls">
+        <span style="color:#64748b; font-size:0.9rem;" id="pageInfo">Showing 0 - 0 of 0 jobs</span>
+        <div style="display:flex; gap:6px;">
+            <button class="btn" style="background:#e2e8f0; color:#1e293b;" id="prevBtn" onclick="window.prevPage()"><i class="ph ph-caret-left"></i> Prev</button>
+            <span style="display:inline-flex; align-items:center; padding:0 12px; font-weight:700; color:#1e293b;" id="pageIndicator">Page 1</span>
+            <button class="btn btn-primary" id="nextBtn" onclick="window.nextPage()">Next <i class="ph ph-caret-right"></i></button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { supabase } from '../js/supabase-client.js';
+
+    let allJobs = [];
+    let filteredJobs = [];
+    let currentPage = 1;
+    const perPage = 25;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'admin') { window.location.href = '../login.html'; return; }
+
+        await fetchJobs();
+
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+    });
+
+    async function fetchJobs() {
+        const { data, error } = await supabase.from('jobs').select(`
+            id, title, status, budget, created_at,
+            client:users!jobs_client_id_fkey(first_name, last_name),
+            worker:users!jobs_assigned_worker_id_fkey(first_name, last_name)
+        `).order('created_at', { ascending: false });
+
+        if (error) {
+            Swal.fire('Error', 'Failed to load jobs', 'error');
+            return;
+        }
+
+        allJobs = data || [];
+        updateStats();
+        applyFilters();
+    }
+
+    function updateStats() {
+        let open = 0, active = 0, completed = 0;
+        
+        allJobs.forEach(j => {
+            if (j.status === 'open') open++;
+            else if (j.status === 'in_progress') active++;
+            else if (j.status === 'completed') completed++;
+        });
+
+        document.getElementById('statTotal').innerText = allJobs.length.toLocaleString();
+        document.getElementById('statOpen').innerText = open.toLocaleString();
+        document.getElementById('statActive').innerText = active.toLocaleString();
+        document.getElementById('statCompleted').innerText = completed.toLocaleString();
+    }
+
+    window.applyFilters = function() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const status = document.getElementById('statusFilter').value;
+
+        filteredJobs = allJobs.filter(j => {
+            let matchSearch = true;
+            if (search) {
+                const title = j.title ? j.title.toLowerCase() : '';
+                const cName = j.client ? `${j.client.first_name || ''} ${j.client.last_name || ''}`.toLowerCase() : '';
+                matchSearch = title.includes(search) || cName.includes(search);
+            }
+            
+            let matchStatus = status ? j.status === status : true;
+
+            return matchSearch && matchStatus;
+        });
+
+        currentPage = 1;
+        renderTable();
+    };
+
+    window.resetFilters = function() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusFilter').value = '';
+        applyFilters();
+    };
+
+    function renderTable() {
+        const tbody = document.getElementById('jobsTableBody');
+        const start = (currentPage - 1) * perPage;
+        const end = start + perPage;
+        const pageJobs = filteredJobs.slice(start, end);
+
+        if (pageJobs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color: #6B7280;">No jobs found matching your criteria.</td></tr>';
+        } else {
+            let html = '';
+            pageJobs.forEach(j => {
+                const dt = new Date(j.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+                const titleStr = j.title.length > 30 ? j.title.substring(0, 30) + '...' : j.title;
+                const clientName = j.client ? `${j.client.first_name} ${j.client.last_name || ''}` : 'Unknown';
+                
+                let workerName = '<span style="color: #9CA3AF;">Not Assigned</span>';
+                if (j.worker) workerName = `<i class="ph ph-wrench"></i> ${j.worker.first_name} ${j.worker.last_name || ''}`;
+
+                const statusLabel = j.status.replace('_', ' ');
+
+                let cancelBtn = '';
+                if (j.status !== 'completed' && j.status !== 'cancelled') {
+                    cancelBtn = `<button type="button" class="btn btn-warning" onclick="window.confirmCancel(${j.id})"><i class="ph ph-x-circle"></i> Cancel</button>`;
+                }
+
+                html += `
+                    <tr>
+                        <td><strong>#${j.id}</strong></td>
+                        <td>${titleStr}</td>
+                        <td><i class="ph ph-user"></i> ${clientName}</td>
+                        <td>${workerName}</td>
+                        <td>Rs. ${j.budget ? parseFloat(j.budget).toLocaleString(undefined, {minimumFractionDigits:2}) : '0.00'}</td>
+                        <td><span class="badge ${j.status}">${statusLabel}</span></td>
+                        <td>${dt}</td>
+                        <td class="action-btns">
+                            ${cancelBtn}
+                            <button type="button" class="btn btn-danger" onclick="window.confirmDelete(${j.id})"><i class="ph ph-trash"></i> Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        const total = filteredJobs.length;
+        const totalPages = Math.ceil(total / perPage) || 1;
+        
+        document.getElementById('pageInfo').innerText = `Showing ${total === 0 ? 0 : start + 1} - ${Math.min(end, total)} of ${total.toLocaleString()} jobs`;
+        document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${totalPages}`;
+        
+        document.getElementById('prevBtn').disabled = currentPage === 1;
+        document.getElementById('nextBtn').disabled = currentPage === totalPages;
+    }
+
+    window.prevPage = function() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderTable();
+        }
+    };
+
+    window.nextPage = function() {
+        const totalPages = Math.ceil(filteredJobs.length / perPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderTable();
+        }
+    };
+
+    window.confirmCancel = function(jobId) {
+        Swal.fire({
+            title: "Cancel this Job?",
+            text: "This will mark the job as cancelled. Are you sure?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#F59E0B",
+            cancelButtonColor: "#6B7280",
+            confirmButtonText: "Yes, cancel it!"
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const { error } = await supabase.from('jobs').update({ status: 'cancelled' }).eq('id', jobId);
+                if (error) {
+                    Swal.fire('Error', 'Failed to cancel job.', 'error');
+                } else {
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Job cancelled!', showConfirmButton: false, timer: 3000 });
+                    const j = allJobs.find(x => x.id === jobId);
+                    if(j) j.status = 'cancelled';
+                    updateStats();
+                    applyFilters();
+                }
+            }
+        });
+    };
+
+    window.confirmDelete = function(jobId) {
+        Swal.fire({
+            title: "Delete permanently?",
+            text: "This action cannot be undone. The job and all its related data will be removed!",
+            icon: "error",
+            showCancelButton: true,
+            confirmButtonColor: "#EF4444",
+            cancelButtonColor: "#6B7280",
+            confirmButtonText: "Yes, delete it!"
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const { error } = await supabase.from('jobs').delete().eq('id', jobId);
+                if (error) {
+                    Swal.fire('Error', 'Failed to delete job.', 'error');
+                } else {
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Job deleted!', showConfirmButton: false, timer: 3000 });
+                    allJobs = allJobs.filter(x => x.id !== jobId);
+                    updateStats();
+                    applyFilters();
+                }
+            }
+        });
+    };
+</script>
+</body>
+</html>

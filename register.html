@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Essential Lanka</title>
+    <meta name="theme-color" content="#10b981">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+    <link rel="stylesheet" href="assets/css/pill-alerts.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .auth-section { padding: 80px 5%; min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: #fdfbf7; }
+        .auth-container { width: 100%; max-width: 550px; position: relative; z-index: 10; animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(30px); }
+        
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        .ios-glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05); padding: 50px 40px; border-radius: 36px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .ios-glass-card:hover { transform: translateY(-5px); box-shadow: 0 30px 60px rgba(0,0,0,0.08); }
+
+        .role-switch { display: flex; background: #f3f4f6; border-radius: 50px; padding: 6px; margin-bottom: 35px; position: relative; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        .role-btn { flex: 1; text-align: center; padding: 12px 6px; border-radius: 50px; font-weight: 700; color: #6b7280; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2; font-size: 0.95rem; }
+        .role-btn.active { color: white; }
+        .role-slider { position: absolute; top: 6px; left: 6px; width: calc(33.333% - 4px); height: calc(100% - 12px); background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1; box-shadow: 0 4px 15px rgba(16,185,129,0.25); }
+        .slide-worker { left: calc(33.333%); }
+        .slide-tool-provider { left: calc(66.666%); }
+
+        .form-group { margin-bottom: 22px; text-align: left; position: relative; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: #374151; letter-spacing: 0.5px; text-transform: uppercase; }
+        .form-control { width: 100%; padding: 16px 24px; border-radius: 20px; border: 2px solid #f3f4f6; background: #f9fafb; font-size: 1rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none; font-weight: 500; color: #1f2937; box-sizing: border-box; }
+        .form-control:focus { border-color: #10b981; background: #ffffff; box-shadow: 0 0 0 4px rgba(16,185,129,0.15); transform: translateY(-2px); }
+        .d-flex-gap { display: flex; gap: 20px; }
+        .d-flex-gap .form-group { flex: 1; }
+        
+        .worker-fields { max-height: 0; overflow: hidden; opacity: 0; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .worker-fields.show { max-height: 350px; opacity: 1; margin-top: 10px; }
+
+        .btn-submit { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 100%; font-size: 1.15rem; box-shadow: 0 12px 24px rgba(16,185,129,0.25); margin-top: 15px; letter-spacing: 1px; display: flex; justify-content: center; align-items: center; gap: 10px;}
+        .btn-submit:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(16,185,129,0.35); }
+        
+        .blob-bg-auth { position: absolute; top: 10%; left: 50%; transform: translateX(-50%); width: 700px; height: 700px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(244,238,227,0) 70%); border-radius: 50%; z-index: 1; filter: blur(40px); animation: pulse 6s infinite alternate; }
+        .blob-bg-auth-2 { position: absolute; bottom: -10%; right: -10%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, rgba(244,238,227,0) 70%); border-radius: 50%; z-index: 1; filter: blur(40px); animation: pulse 8s infinite alternate-reverse; }
+        
+        @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 100% { transform: translateX(-50%) scale(1.1); } }
+        @keyframes pulse2 { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+
+        .icon-header { width: 80px; height: 80px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #10b981; font-size: 2.5rem; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .ios-glass-card:hover .icon-header { transform: scale(1.1) rotate(-5deg); }
+
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .back-home { position: absolute; top: 30px; left: 30px; z-index: 20; color: #374151; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 8px; font-size: 1rem; transition: color 0.3s; }
+        .back-home:hover { color: #10b981; }
+
+        @media (max-width: 768px) {
+            .ios-glass-card { padding: 40px 25px; border-radius: 28px; }
+            .auth-section { padding: 40px 5%; }
+            .d-flex-gap { flex-direction: column; gap: 0; }
+            .blob-bg-auth { width: 400px; height: 400px; }
+            .role-btn { font-size: 0.8rem; padding: 10px 4px; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="index.html" class="back-home"><i class="ph-bold ph-arrow-left"></i> Home</a>
+
+<section class="auth-section">
+    <div class="blob-bg-auth"></div>
+    <div class="blob-bg-auth-2" style="animation: pulse2 8s infinite alternate-reverse;"></div>
+    
+    <div class="auth-container">
+        <div class="ios-glass-card glass-premium text-center">
+            
+            <div class="icon-header">
+                <i class="ph-fill ph-user-plus"></i>
+            </div>
+            
+            <h2 style="font-weight: 800; font-size: 2.4rem; margin-bottom: 8px; color: #111827; letter-spacing: -0.5px;">Create Account</h2>
+            <p style="color: #6b7280; margin-bottom: 40px; font-size: 1.15rem;">Join Essential Lanka today.</p>
+
+            <form id="registerForm">
+                <div class="role-switch">
+                    <div class="role-slider" id="roleSlider"></div>
+                    <div class="role-btn active" onclick="setRole('client')">Customer</div>
+                    <div class="role-btn" onclick="setRole('worker')">Worker</div>
+                    <div class="role-btn" onclick="setRole('tool_provider')">Tool Provider</div>
+                </div>
+                <input type="hidden" id="roleInput" value="client">
+
+                <div class="d-flex-gap">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" id="regFirstName" class="form-control" placeholder="John" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="regLastName" class="form-control" placeholder="Doe" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="regEmail" class="form-control" placeholder="john@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <input type="tel" id="regPhone" class="form-control" placeholder="07XXXXXXXX" pattern="[0-9]{10}" required>
+                </div>
+
+                <div class="worker-fields" id="workerExtraFields">
+                    <div class="form-group">
+                        <label>National Identity Card (NIC)</label>
+                        <input type="text" id="regNic" class="form-control" placeholder="e.g. 1995XXXXXXV">
+                    </div>
+                    <div class="form-group" id="categoryGroup">
+                        <label>Primary Service / Category</label>
+                        <select id="regCategory" class="form-control">
+                            <option value="">Select your service...</option>
+                            <option value="1">Electrical</option>
+                            <option value="2">Plumbing</option>
+                            <option value="3">Cleaning</option>
+                            <option value="4">Carpentry</option>
+                            <option value="5">Equipment & Tool Rental</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" class="form-control" placeholder="Create a strong password" required minlength="6">
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span id="btnText">Sign Up</span>
+                    <div class="spinner" id="btnSpinner"></div>
+                </button>
+                
+                <p style="margin-top: 30px; color: #6b7280; font-size: 1.05rem; font-weight: 500;">
+                    Already have an account? <a href="login.html" style="color: #10b981; font-weight: 800; text-decoration: none; border-bottom: 2px solid transparent; transition: 0.3s;" onmouseover="this.style.borderBottom='2px solid #10b981'" onmouseout="this.style.borderBottom='2px solid transparent'">Log In</a>
+                </p>
+            </form>
+
+        </div>
+    </div>
+</section>
+
+<script>
+function setRole(role) {
+    const slider = document.getElementById('roleSlider');
+    const input = document.getElementById('roleInput');
+    const btns = document.querySelectorAll('.role-btn');
+    const workerFields = document.getElementById('workerExtraFields');
+    const nicInput = document.getElementById('regNic');
+    const categoryInput = document.getElementById('regCategory');
+    
+    input.value = role;
+    btns.forEach(btn => btn.classList.remove('active'));
+    slider.classList.remove('slide-worker', 'slide-tool-provider');
+    
+    if(role === 'worker') {
+        slider.classList.add('slide-worker');
+        btns[1].classList.add('active');
+        workerFields.classList.add('show');
+        nicInput.required = true;
+        categoryInput.required = true;
+    } else if(role === 'tool_provider') {
+        slider.classList.add('slide-tool-provider');
+        btns[2].classList.add('active');
+        workerFields.classList.add('show');
+        nicInput.required = true;
+        categoryInput.required = false;
+    } else {
+        btns[0].classList.add('active');
+        workerFields.classList.remove('show');
+        nicInput.required = false;
+        categoryInput.required = false;
+    }
+}
+</script>
+
+<script type="module">
+    import { registerUser } from './js/auth.js';
+    import { supabase } from './js/supabase-client.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        // 1. Handle role param from URL (e.g. register.html?role=worker)
+        const urlParams = new URLSearchParams(window.location.search);
+        const roleParam = urlParams.get('role');
+        if (roleParam && ['client', 'worker', 'tool_provider'].includes(roleParam)) {
+            setRole(roleParam);
+        }
+
+        // 2. Dynamically load categories from Supabase
+        const catSelect = document.getElementById('regCategory');
+        try {
+            const { data: categories, error } = await supabase
+                .from('categories')
+                .select('id, name_en')
+                .order('id', { ascending: true });
+
+            if (categories && categories.length > 0) {
+                catSelect.innerHTML = '<option value="">Select your service...</option>';
+                categories.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name_en;
+                    catSelect.appendChild(opt);
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching categories for registration:', err);
+        }
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const userData = {
+            role: document.getElementById('roleInput').value,
+            first_name: document.getElementById('regFirstName').value,
+            last_name: document.getElementById('regLastName').value,
+            email: document.getElementById('regEmail').value,
+            phone: document.getElementById('regPhone').value,
+            nic: document.getElementById('regNic').value,
+            category_id: document.getElementById('regCategory').value ? parseInt(document.getElementById('regCategory').value) : null,
+            password: document.getElementById('regPassword').value,
+        };
+
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // UI Loading state
+        submitBtn.disabled = true;
+        btnText.style.display = 'none';
+        btnSpinner.style.display = 'block';
+
+        await registerUser(userData);
+
+        // Reset UI state
+        submitBtn.disabled = false;
+        btnText.style.display = 'block';
+        btnSpinner.style.display = 'none';
+    });
+</script>
+
+</body>
+</html>
+

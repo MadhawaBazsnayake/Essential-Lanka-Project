@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Gigs - Provider Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .dash-section { padding: 40px 5%; min-height: 85vh; position: relative; background: #fdfbf7; }
+        .dash-container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 10; }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-header h1 { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; display: flex; align-items: center; gap: 10px; }
+        .btn-back { background: #e5e7eb; color: #374151; padding: 10px 20px; border-radius: 50px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .btn-back:hover { background: #d1d5db; color: #111827; }
+        .btn-primary { background: #3b82f6; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 700; text-decoration: none; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 1rem; box-shadow: 0 10px 20px rgba(59,130,246,0.2); transition: 0.3s; }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-3px); box-shadow: 0 15px 25px rgba(59,130,246,0.3); }
+
+        .gigs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+        .gig-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 40px rgba(0,0,0,0.06); border-radius: 25px; overflow: hidden; transition: 0.3s; display: flex; flex-direction: column; }
+        .gig-card:hover { transform: translateY(-5px); box-shadow: 0 20px 50px rgba(0,0,0,0.1); border-color: #3b82f6; }
+        .gig-image { width: 100%; height: 200px; background: #e5dfd5; display: flex; justify-content: center; align-items: center; font-size: 3rem; color: #9ca3af; object-fit: cover; }
+        .gig-content { padding: 25px; flex: 1; display: flex; flex-direction: column; }
+        .gig-title { font-size: 1.3rem; font-weight: 800; color: #1a1a1a; margin-bottom: 10px; line-height: 1.4; }
+        .gig-desc { font-size: 0.95rem; color: #64748b; margin-bottom: 20px; line-height: 1.6; flex: 1; }
+        .gig-price { font-size: 1.4rem; font-weight: 800; color: #3b82f6; display: flex; align-items: center; gap: 5px; }
+        
+        .gig-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1.5px solid #f0ebe1; }
+        .btn-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: none; cursor: pointer; transition: 0.3s; font-size: 1.2rem; }
+        .btn-edit { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+        .btn-edit:hover { background: #f59e0b; color: white; }
+        .btn-delete { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .btn-delete:hover { background: #ef4444; color: white; }
+
+        .toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e5e7eb; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.3s; padding: 20px; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #ffffff; width: 100%; max-width: 600px; border-radius: 30px; padding: 35px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); transform: translateY(30px) scale(0.95); transition: 0.4s; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
+        .close-btn { position: absolute; top: 25px; right: 25px; font-size: 1.5rem; color: #a3a3a3; cursor: pointer; transition: 0.3s; border: none; background: transparent; }
+        
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; color: #1a1a1a; }
+        .form-control { width: 100%; padding: 15px 20px; border-radius: 15px; border: 2px solid #e5dfd5; background: #f8fafc; font-size: 1rem; transition: 0.3s; outline: none; font-weight: 500; font-family: inherit; }
+        .form-control:focus { border-color: #3b82f6; background: #ffffff; }
+    </style>
+</head>
+<body>
+
+<section class="dash-section">
+    <div class="dash-container">
+        
+        <div class="page-header">
+            <h1><i class="ph-fill ph-briefcase" style="color: #3b82f6;"></i> Manage My Gigs</h1>
+            <div style="display: flex; gap: 15px;">
+                <a href="dashboard.html" class="btn-back"><i class="ph-bold ph-arrow-left"></i> Dashboard</a>
+                <button onclick="openModal('addGigModal')" class="btn-primary"><i class="ph-bold ph-plus-circle"></i> Create New Gig</button>
+            </div>
+        </div>
+
+        <div id="gigsContainer" class="gigs-grid">
+            <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background: rgba(255,255,255,0.5); border-radius: 20px; color: #64748b; font-size: 1.1rem;">
+                <i class="ph-duotone ph-spinner-gap ph-spin" style="font-size: 2rem;"></i> Loading your gigs...
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Add Gig Modal -->
+<div class="modal-overlay" id="addGigModal">
+    <div class="modal-box">
+        <button class="close-btn" onclick="closeModal('addGigModal')"><i class="ph-bold ph-x"></i></button>
+        <h2 class="modal-title" style="font-size: 1.8rem; font-weight: 800; margin-bottom: 25px;"><i class="ph-fill ph-sparkle" style="color: #3b82f6;"></i> Create New Gig</h2>
+        <form id="gigForm">
+            <input type="hidden" id="gigId">
+            <div class="form-group">
+                <label>Gig Title *</label>
+                <input type="text" id="gigTitle" class="form-control" placeholder="I will do..." required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select id="gigCategory" class="form-control" required>
+                        <option value="General Handyman">General Handyman</option>
+                        <option value="Plumbing">Plumbing</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Carpentry">Carpentry</option>
+                        <option value="Masonry">Masonry</option>
+                        <option value="Painting">Painting</option>
+                        <option value="Cleaning">Cleaning</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Base Price (LKR) *</label>
+                    <input type="number" step="0.01" id="gigPrice" class="form-control" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description *</label>
+                <textarea id="gigDescription" class="form-control" rows="4" placeholder="Describe the service you provide..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Upload Cover Image</label>
+                <input type="file" id="gigImage" class="form-control" accept="image/*">
+                <small style="color: #64748b; margin-top: 5px; display: block;">Leave empty to keep existing image (if editing).</small>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 18px;" id="submitBtn">
+                <i class="ph-bold ph-floppy-disk"></i> Save Gig
+            </button>
+        </form>
+    </div>
+</div>
+
+<script type="module">
+    import { supabase } from '../js/supabase-client.js';
+
+    let currentUserId = null;
+
+    window.openModal = function(modalId) { 
+        document.getElementById(modalId).classList.add('active'); 
+        document.body.style.overflow = 'hidden'; 
+    };
+    window.closeModal = function(modalId) { 
+        document.getElementById(modalId).classList.remove('active'); 
+        document.body.style.overflow = 'auto'; 
+        if (modalId === 'addGigModal') {
+            document.getElementById('gigForm').reset();
+            document.getElementById('gigId').value = '';
+        }
+    };
+    window.onclick = function(e) { if(e.target.classList.contains('modal-overlay')) window.closeModal(e.target.id); };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: userProfile } = await supabase.from('users').select('*').eq('auth_id', session.user.id).single();
+        if (!userProfile) { window.location.href = '../login.html'; return; }
+        
+        currentUserId = userProfile.id;
+        
+        await loadGigs();
+
+        document.getElementById('gigForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const ogText = btn.innerHTML;
+            btn.innerHTML = 'Saving...'; btn.disabled = true;
+
+            const title = document.getElementById('gigTitle').value;
+            const category = document.getElementById('gigCategory').value;
+            const price = parseFloat(document.getElementById('gigPrice').value);
+            const desc = document.getElementById('gigDescription').value;
+            const gigId = document.getElementById('gigId').value;
+            const fileInput = document.getElementById('gigImage');
+            
+            let imagePath = null;
+
+            // Upload image if selected
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${currentUserId}-${Date.now()}.${fileExt}`;
+                const { data: uploadData, error: uploadError } = await supabase.storage.from('gigs').upload(fileName, file);
+                
+                if (uploadError) {
+                    Swal.fire('Upload Error', uploadError.message, 'error');
+                    btn.innerHTML = ogText; btn.disabled = false;
+                    return;
+                }
+                const { data: { publicUrl } } = supabase.storage.from('gigs').getPublicUrl(fileName);
+                imagePath = publicUrl;
+            }
+
+            const payload = {
+                worker_id: currentUserId,
+                title: title,
+                category: category,
+                base_price: price,
+                description: desc,
+                status: 'active'
+            };
+
+            if (imagePath) payload.image_path = imagePath;
+
+            if (gigId) {
+                // Update
+                const { error } = await supabase.from('gigs').update(payload).eq('id', gigId);
+                if (error) Swal.fire('Error', error.message, 'error');
+                else {
+                    Swal.fire('Updated!', 'Your gig has been updated.', 'success');
+                    closeModal('addGigModal');
+                    loadGigs();
+                }
+            } else {
+                // Insert
+                const { error } = await supabase.from('gigs').insert([payload]);
+                if (error) Swal.fire('Error', error.message, 'error');
+                else {
+                    Swal.fire('Created!', 'Your new gig is live.', 'success');
+                    closeModal('addGigModal');
+                    loadGigs();
+                }
+            }
+
+            btn.innerHTML = ogText; btn.disabled = false;
+        });
+    });
+
+    async function loadGigs() {
+        const { data: gigs, error } = await supabase.from('gigs').select('*').eq('worker_id', currentUserId).order('created_at', { ascending: false });
+        
+        const container = document.getElementById('gigsContainer');
+        if (error) {
+            container.innerHTML = `<div style="grid-column: 1 / -1; color: red;">Failed to load gigs.</div>`;
+            return;
+        }
+
+        if (gigs.length === 0) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.5); border-radius: 20px;">
+                    <div style="width: 80px; height: 80px; background: #e0e7ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 20px;">
+                        <i class="ph-duotone ph-briefcase"></i>
+                    </div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: #1a1a1a; margin-bottom: 10px;">You haven't created any gigs yet.</h3>
+                    <p style="color: #64748b; margin-bottom: 25px;">Create a gig to showcase your services and attract more clients.</p>
+                    <button onclick="openModal('addGigModal')" class="btn-primary"><i class="ph-bold ph-plus-circle"></i> Create Your First Gig</button>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        gigs.forEach(gig => {
+            const isChecked = gig.status === 'active' ? 'checked' : '';
+            const imgHtml = gig.image_path 
+                ? `<img src="${gig.image_path}" class="gig-image" alt="${gig.title}">` 
+                : `<div class="gig-image"><i class="ph-duotone ph-image"></i></div>`;
+
+            html += `
+                <div class="gig-card">
+                    ${imgHtml}
+                    <div class="gig-content">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <span style="font-size: 0.8rem; font-weight: 700; color: #3b82f6; background: #eff6ff; padding: 5px 12px; border-radius: 50px;">${gig.category}</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 0.8rem; font-weight: 700; color: ${gig.status === 'active' ? '#10b981' : '#9ca3af'}" id="statusText_${gig.id}">${gig.status === 'active' ? 'Active' : 'Paused'}</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" onchange="window.toggleGigStatus(${gig.id}, this.checked)" ${isChecked}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <h3 class="gig-title">${gig.title}</h3>
+                        <p class="gig-desc">${gig.description.substring(0, 100)}...</p>
+                        <div class="gig-price">Rs. ${gig.base_price.toFixed(2)}</div>
+                        
+                        <div class="gig-actions">
+                            <button class="btn-icon btn-edit" onclick="window.editGig(${gig.id})" title="Edit Gig"><i class="ph-bold ph-pencil-simple"></i></button>
+                            <button class="btn-icon btn-delete" onclick="window.deleteGig(${gig.id})" title="Delete Gig"><i class="ph-bold ph-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        window.gigsData = gigs; // Store for easy editing access
+        container.innerHTML = html;
+    }
+
+    window.toggleGigStatus = async function(id, isActive) {
+        const newStatus = isActive ? 'active' : 'paused';
+        const { error } = await supabase.from('gigs').update({ status: newStatus }).eq('id', id);
+        if(!error) {
+            const statusText = document.getElementById('statusText_' + id);
+            statusText.innerText = isActive ? 'Active' : 'Paused';
+            statusText.style.color = isActive ? '#10b981' : '#9ca3af';
+        } else {
+            Swal.fire('Error', 'Failed to update status', 'error');
+        }
+    };
+
+    window.deleteGig = async function(id) {
+        if(confirm('Are you sure you want to delete this gig? This action cannot be undone.')) {
+            const { error } = await supabase.from('gigs').delete().eq('id', id);
+            if(error) Swal.fire('Error', 'Failed to delete gig.', 'error');
+            else loadGigs();
+        }
+    };
+
+    window.editGig = function(id) {
+        const gig = window.gigsData.find(g => g.id === id);
+        if(gig) {
+            document.getElementById('gigId').value = gig.id;
+            document.getElementById('gigTitle').value = gig.title;
+            document.getElementById('gigCategory').value = gig.category;
+            document.getElementById('gigPrice').value = gig.base_price;
+            document.getElementById('gigDescription').value = gig.description;
+            openModal('addGigModal');
+        }
+    };
+</script>
+
+</body>
+</html>

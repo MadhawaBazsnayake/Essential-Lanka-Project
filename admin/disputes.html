@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Disputes - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .admin-section { padding: 50px 5%; min-height: 85vh; position: relative; }
+        .admin-container { max-width: 1000px; margin: 0 auto; position: relative; z-index: 10; }
+        
+        .header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; color: #666; text-decoration: none; font-weight: 700; transition: 0.3s; font-size: 1.05rem; }
+        .back-btn:hover { color: #10b981; }
+        .page-title { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; }
+
+        .glass-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 40px rgba(0,0,0,0.06); padding: 40px; border-radius: 35px; animation: fadeUp 0.5s ease forwards;}
+        
+        .dispute-card { background: #ffffff; border: 1.5px solid #f0ebe1; border-radius: 20px; padding: 25px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px; transition: 0.3s; }
+        .dispute-card:hover { border-color: #ef4444; box-shadow: 0 12px 35px rgba(239,68,68,0.1); transform: translateY(-3px); }
+
+        .dispute-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1.5px dashed #e5dfd5; padding-bottom: 15px; }
+        
+        .badge-urgent { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+        .badge-review { background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+
+        .dispute-parties { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center; gap: 10px; background: #f8fafc; padding: 15px; border-radius: 15px; }
+        .party { display: flex; flex-direction: column; }
+        .party-role { font-size: 0.8rem; color: #a3a3a3; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+        .party-name { font-size: 1.05rem; font-weight: 800; color: #1a1a1a; }
+        .party-vs { font-size: 1.2rem; font-weight: 800; color: #cbd5e1; text-align: center; }
+
+        .dispute-reason { color: #4a4a4a; font-size: 0.95rem; line-height: 1.6; }
+        .dispute-reason strong { color: #1a1a1a; }
+
+        .action-group { display: flex; justify-content: flex-end; gap: 12px; margin-top: 5px; }
+        
+        .btn-outline { border: 2px solid #e5dfd5; background: transparent; color: #1a1a1a; padding: 10px 20px; border-radius: 50px; font-weight: 700; text-decoration: none; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+        .btn-outline:hover { border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.05); }
+        
+        .btn-resolve { background: #10b981; color: white; padding: 10px 25px; border-radius: 50px; font-weight: 700; text-decoration: none; transition: 0.3s; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(16,185,129,0.2); display: inline-flex; align-items: center; gap: 8px; }
+        .btn-resolve:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(16,185,129,0.3); background: #059669; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .dispute-parties { grid-template-columns: 1fr; text-align: center; }
+            .party-vs { transform: rotate(90deg); margin: 10px 0; }
+            .action-group { flex-direction: column; }
+            .btn-outline, .btn-resolve { width: 100%; justify-content: center; }
+            .header-action { flex-direction: column; align-items: flex-start; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<section class="admin-section bg-cream">
+    <div class="mesh-bg"></div>
+    
+    <div class="admin-container">
+        
+        <div class="header-action fade-up show">
+            <h1 class="page-title">Manage Disputes</h1>
+            <a href="dashboard.html" class="back-btn"><i class="ph-bold ph-arrow-left"></i> Back to Dashboard</a>
+        </div>
+
+        <div class="glass-box glass-premium fade-up show" style="transition-delay: 100ms;">
+            <p style="color: #666; margin-bottom: 25px; font-size: 1.05rem;">Review and resolve conflicts reported by customers or workers.</p>
+
+            <div id="disputesContainer">
+                <div style="text-align: center; padding: 40px; color: #64748b;">Loading disputes...</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script type="module">
+    import { supabase } from '../js/supabase-client.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'admin') { window.location.href = '../login.html'; return; }
+
+        await loadDisputes();
+    });
+
+    async function loadDisputes() {
+        const { data: disputes, error } = await supabase.from('jobs').select(`
+            id, title, created_at, status,
+            client:users!jobs_client_id_fkey(first_name, last_name, phone),
+            worker:users!jobs_assigned_worker_id_fkey(first_name, last_name, phone)
+        `).eq('status', 'cancelled').order('created_at', { ascending: false }).limit(20);
+
+        const container = document.getElementById('disputesContainer');
+
+        if (error || !disputes || disputes.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <i class="ph-fill ph-check-circle" style="font-size: 4rem; color: #10b981; margin-bottom: 15px;"></i>
+                    <h3 style="font-size: 1.5rem; font-weight: 800; color: #1a1a1a; margin-bottom: 5px;">All Clear!</h3>
+                    <p style="color: #64748b; font-size: 1rem;">There are no active disputes to resolve at the moment.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        disputes.forEach(d => {
+            const dt = new Date(d.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+            const clientName = d.client ? `${d.client.first_name} ${d.client.last_name || ''}` : 'Unknown';
+            const workerName = d.worker ? `${d.worker.first_name} ${d.worker.last_name || ''}` : 'Not Assigned';
+
+            html += `
+                <div class="dispute-card" id="dispute-${d.id}">
+                    <div class="dispute-header">
+                        <div>
+                            <span class="badge-urgent"><i class="ph-fill ph-warning-circle"></i> Cancelled Job Dispute</span>
+                            <h3 style="font-size: 1.3rem; font-weight: 800; color: #1a1a1a; margin-top: 5px;">${d.title}</h3>
+                        </div>
+                        <span style="color: #a3a3a3; font-size: 0.9rem; font-weight: 600;">Job #${d.id} • ${dt}</span>
+                    </div>
+
+                    <div class="dispute-parties">
+                        <div class="party">
+                            <span class="party-role">Client</span>
+                            <span class="party-name">${clientName}</span>
+                            <span style="font-size: 0.85rem; color: #64748b; margin-top: 3px;">${d.client?.phone || 'N/A'}</span>
+                        </div>
+                        <div class="party-vs">VS</div>
+                        <div class="party" style="text-align: right;">
+                            <span class="party-role">Worker</span>
+                            <span class="party-name">${workerName}</span>
+                            <span style="font-size: 0.85rem; color: #64748b; margin-top: 3px;">${d.worker?.phone || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <div class="dispute-reason">
+                        <strong>System Note:</strong> This job was marked as cancelled after a worker was assigned, indicating a potential dispute or unfulfilled service.
+                    </div>
+
+                    <div class="action-group">
+                        <button class="btn-outline" onclick="window.contactParties(${d.id})"><i class="ph-bold ph-envelope-simple"></i> Contact Parties</button>
+                        <button class="btn-resolve" onclick="window.resolveDispute(${d.id})"><i class="ph-bold ph-check-circle"></i> Mark Resolved</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    window.contactParties = function(id) {
+        Swal.fire('Contact Options', 'This feature allows admins to send a message to both parties via SMS or Email. (Demo feature)', 'info');
+    };
+
+    window.resolveDispute = function(id) {
+        Swal.fire({
+            title: "Resolve Dispute?",
+            text: "Are you sure you want to mark this dispute as resolved?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#10b981",
+            cancelButtonColor: "#6B7280",
+            confirmButtonText: "Yes, resolve it!"
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const { error } = await supabase.from('jobs').update({ status: 'completed' }).eq('id', id);
+                if (error) {
+                    Swal.fire('Error', `Failed to update dispute: ${error.message}`, 'error');
+                    return;
+                }
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Dispute marked as resolved.', showConfirmButton: false, timer: 3000 });
+                const card = document.getElementById('dispute-' + id);
+                if (card) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.95)';
+                    setTimeout(() => card.remove(), 300);
+                }
+            }
+        });
+    };
+</script>
+
+</body>
+</html>
+
