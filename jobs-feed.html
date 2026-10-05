@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Jobs - Essential Lanka</title>
+    <meta name="theme-color" content="#10b981">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+    <style>
+        .feed-section { padding: 40px 5%; min-height: 85vh; background: #f8fafc; position: relative; }
+        .feed-container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 10; }
+        
+        .page-header { text-align: center; margin-bottom: 40px; }
+        .page-header h1 { font-size: 2.5rem; font-weight: 800; color: #1e293b; margin-bottom: 15px; }
+        .page-header p { color: #64748b; font-size: 1.1rem; }
+
+        /* Search & Filter Bar */
+        .search-bar-container { background: #ffffff; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 40px; display: flex; gap: 15px; flex-wrap: wrap; border: 1.5px solid #e2e8f0; }
+        .search-input-wrap { flex: 1; min-width: 250px; position: relative; }
+        .search-input-wrap i { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.2rem; }
+        .search-input { width: 100%; padding: 15px 20px 15px 50px; border: 2px solid #f1f5f9; background: #f8fafc; border-radius: 12px; font-family: inherit; font-size: 1rem; outline: none; transition: 0.3s; box-sizing: border-box;}
+        .search-input:focus { border-color: #3b82f6; background: #ffffff; }
+        
+        .filter-select { padding: 15px 20px; border: 2px solid #f1f5f9; background: #f8fafc; border-radius: 12px; font-family: inherit; font-size: 1rem; outline: none; min-width: 200px; cursor: pointer; }
+        .btn-search { background: #3b82f6; color: white; border: none; padding: 15px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 1rem; }
+        .btn-search:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(59,130,246,0.3); }
+
+        /* Jobs Grid */
+        .jobs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+        
+        .job-card { background: #ffffff; border-radius: 20px; padding: 25px; border: 1.5px solid #e2e8f0; transition: 0.3s; display: flex; flex-direction: column; position: relative; overflow: hidden; animation: fadeUp 0.5s ease forwards; }
+        .job-card:hover { border-color: #3b82f6; box-shadow: 0 20px 40px rgba(0,0,0,0.06); transform: translateY(-5px); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .job-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .cat-badge { background: rgba(59,130,246,0.1); color: #3b82f6; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+        .job-price { font-size: 1.2rem; font-weight: 800; color: #10b981; }
+        
+        .job-title { font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 10px; line-height: 1.4; }
+        .job-desc { color: #64748b; font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .job-meta { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .job-meta span { display: inline-flex; align-items: center; gap: 5px; font-size: 0.85rem; color: #64748b; font-weight: 500; }
+        
+        .job-footer { border-top: 1px solid #f1f5f9; padding-top: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .client-info { display: flex; align-items: center; gap: 10px; }
+        .client-avatar { width: 35px; height: 35px; border-radius: 50%; background: #e2e8f0; display: flex; justify-content: center; align-items: center; font-size: 0.9rem; font-weight: 700; color: #64748b; }
+        .client-name { font-size: 0.9rem; font-weight: 700; color: #1e293b; }
+        
+        .btn-view { background: #1e293b; color: white; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: 0.3s; cursor: pointer;}
+        .btn-view:hover { background: #3b82f6; }
+
+        .loading-spinner { text-align: center; padding: 50px; color: #64748b; grid-column: 1 / -1; }
+        
+        @media (max-width: 768px) {
+            .search-bar-container { flex-direction: column; }
+            .btn-search { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="feed-section">
+    <div class="feed-container">
+        
+        <div class="page-header">
+            <h1>Find Your Next Job</h1>
+            <p>Browse through hundreds of tasks posted by clients in your area.</p>
+        </div>
+
+        <!-- Search & Filters -->
+        <div class="search-bar-container">
+            <div class="search-input-wrap">
+                <i class="ph-bold ph-magnifying-glass"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search for jobs (e.g., plumbing, painting)...">
+            </div>
+            
+            <select id="categoryFilter" class="filter-select">
+                <option value="">All Categories</option>
+            </select>
+            
+            <button id="searchBtn" class="btn-search">Search Jobs</button>
+        </div>
+
+        <!-- Jobs Grid -->
+        <div class="jobs-grid" id="jobsGrid">
+            <div class="loading-spinner">
+                <i class="ph-bold ph-spinner" style="font-size: 2rem; animation: spin 1s linear infinite;"></i>
+                <p>Loading jobs...</p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script type="module">
+    import { loadLayout } from './js/layout.js';
+    import { supabase } from './js/supabase-client.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout('nav-jobs');
+        
+        const jobsGrid = document.getElementById('jobsGrid');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+
+        // Check if user is logged in and is a worker
+        let isWorker = false;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            const { data: profile } = await supabase.from('users').select('role').eq('auth_id', session.user.id).single();
+            if (profile && profile.role === 'worker') {
+                isWorker = true;
+            }
+        }
+
+        // Load Categories
+        async function loadCategories() {
+            const { data, error } = await supabase.from('categories').select('id, name_en, name_si');
+            if (error) { console.error("Error loading categories", error); return; }
+            data.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name_en || cat.name_si;
+                categoryFilter.appendChild(opt);
+            });
+        }
+
+        // Load Jobs
+        async function loadJobs(search = '', categoryId = '') {
+            jobsGrid.innerHTML = `<div class="loading-spinner"><i class="ph-bold ph-spinner" style="font-size: 2rem; animation: spin 1s linear infinite;"></i><p>Loading jobs...</p></div>`;
+            
+            let query = supabase.from('jobs').select(`
+                id, title, description, budget, created_at, image_1, image_2,
+                category:categories(name_en, icon_class),
+                client:users!jobs_client_id_fkey(first_name, last_name)
+            `).eq('status', 'open').order('created_at', { ascending: false });
+
+            if (search) {
+                query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+            }
+            if (categoryId) {
+                query = query.eq('category_id', categoryId);
+            }
+
+            const { data: jobs, error } = await query;
+            
+            if (error) {
+                console.error("Error loading jobs", error);
+                jobsGrid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: red;">Failed to load jobs.</div>`;
+                return;
+            }
+
+            if (!jobs || jobs.length === 0) {
+                jobsGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px; background: white; border-radius: 20px; border: 1.5px dashed #cbd5e1;">
+                        <i class="ph-fill ph-magnifying-glass" style="font-size: 3rem; color: #94a3b8; margin-bottom: 15px;"></i>
+                        <h3 style="font-size: 1.5rem; color: #1e293b; margin-bottom: 5px;">No Jobs Found</h3>
+                        <p style="color: #64748b;">Try adjusting your search keywords or category filters.</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            jobs.forEach(job => {
+                const date = new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const fName = job.client?.first_name || 'Customer';
+                const lName = job.client?.last_name || '';
+                const initials = fName[0] + (lName[0] || '');
+                const catName = job.category?.name_en || 'Service';
+                const iconClass = job.category?.icon_class || 'ph-fill ph-wrench';
+                
+                const viewLink = isWorker ? `worker/find-jobs.html?job_id=${job.id}` : `login.html`;
+
+                const imgBanner = job.image_1 ? `
+                    <div style="height: 150px; margin: -25px -25px 15px -25px; border-radius: 20px 20px 0 0; overflow: hidden; background: #f1f5f9;">
+                        <img src="${job.image_1}" alt="${job.title}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                ` : '';
+
+                html += `
+                    <div class="job-card">
+                        ${imgBanner}
+                        <div class="job-header">
+                            <span class="cat-badge"><i class="${iconClass}"></i> ${catName}</span>
+                            <span class="job-price">Rs. ${parseFloat(job.budget).toLocaleString()}</span>
+                        </div>
+                        <h3 class="job-title">${job.title}</h3>
+                        <p class="job-desc">${job.description}</p>
+                        <div class="job-meta">
+                            <span><i class="ph-fill ph-map-pin"></i> Location Available</span>
+                            <span><i class="ph-fill ph-clock"></i> ${date}</span>
+                        </div>
+                        <div class="job-footer">
+                            <div class="client-info">
+                                <div class="client-avatar">${initials}</div>
+                                <span class="client-name">${fName}</span>
+                            </div>
+                            <a href="${viewLink}" class="btn-view">View & Bid</a>
+                        </div>
+                    </div>`;
+            });
+            jobsGrid.innerHTML = html;
+        }
+
+        searchBtn.addEventListener('click', () => {
+            loadJobs(searchInput.value, categoryFilter.value);
+        });
+        
+        searchInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') loadJobs(searchInput.value, categoryFilter.value);
+        });
+
+        categoryFilter.addEventListener('change', () => {
+            loadJobs(searchInput.value, categoryFilter.value);
+        });
+
+        await loadCategories();
+        await loadJobs();
+    });
+</script>
+</body>
+</html>

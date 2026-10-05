@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+    <link rel="stylesheet" href="assets/css/pill-alerts.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4eee3; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .verify-card { background: rgba(255,255,255,0.95); padding: 50px 40px; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); text-align: center; max-width: 450px; width: 90%; border: 1px solid rgba(255,255,255,0.8); backdrop-filter: blur(20px); }
+        .icon-circle { width: 80px; height: 80px; border-radius: 50%; background: rgba(16,185,129,0.1); display: flex; justify-content: center; align-items: center; font-size: 2.5rem; color: #10b981; margin: 0 auto 20px; }
+        h2 { color: #1a1a1a; margin-bottom: 10px; font-weight: 800; font-size: 1.8rem; }
+        p { color: #666; margin-bottom: 25px; line-height: 1.6; font-size: 1.05rem; }
+        
+        .form-group { text-align: left; margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; color: #374151; }
+        
+        .form-control { width: 100%; padding: 16px; border-radius: 15px; border: 2px solid #e5dfd5; font-size: 1.2rem; text-align: center; letter-spacing: 5px; font-weight: bold; box-sizing: border-box; outline: none; transition: 0.3s; font-family: inherit; }
+        .form-control:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
+        
+        .email-input { width: 100%; padding: 14px 20px; border-radius: 15px; border: 2px solid #e5dfd5; font-size: 1rem; box-sizing: border-box; outline: none; transition: 0.3s; font-family: inherit; letter-spacing: normal; text-align: left; font-weight: 500; }
+        .email-input:focus { border-color: #10b981; }
+
+        .btn-submit { display: flex; justify-content: center; align-items: center; gap: 10px; background: #10b981; color: white; padding: 18px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; width: 100%; font-size: 1.1rem; transition: 0.3s; margin-top: 10px; }
+        .btn-submit:hover { background: #059669; transform: translateY(-3px); box-shadow: 0 10px 25px rgba(16,185,129,0.25); }
+        
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="verify-card">
+        <div class="icon-circle">
+            <i class="ph-fill ph-envelope-open"></i>
+        </div>
+        <h2>Verify Your Email</h2>
+        <p>Enter the 6-digit OTP code sent to your email address to verify your account.</p>
+        
+        <form id="verifyForm">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" class="email-input" readonly required>
+            </div>
+            
+            <div class="form-group">
+                <label>6-Digit OTP</label>
+                <input type="text" id="otp" class="form-control" placeholder="000000" maxlength="6" required autocomplete="off">
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <span id="btnText">Verify Account</span>
+                <div class="spinner" id="btnSpinner"></div>
+            </button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { supabase } from './js/supabase-client.js';
+
+        // Pre-fill email if passed in URL query param
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.has('email')) {
+            document.getElementById('email').value = urlParams.get('email');
+        }
+
+        document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const otp = document.getElementById('otp').value;
+
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+
+            submitBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnSpinner.style.display = 'block';
+
+            try {
+                const { data, error } = await supabase.from('users').select('otp_code').eq('email', email).single();
+                if (error || !data) throw new Error("Email not found.");
+                if (data.otp_code !== otp) throw new Error("Invalid or expired OTP code.");
+
+                await supabase.from('users').update({ is_verified: true, otp_code: null }).eq('email', email);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Verified!',
+                    text: 'Your email has been successfully verified. You can now log in.',
+                }).then(() => {
+                    window.location.href = 'login.html';
+                });
+
+            } catch (error) {
+                Swal.fire('Verification Failed', error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                btnText.style.display = 'block';
+                btnSpinner.style.display = 'none';
+            }
+        });
+        // Pre-fill email if passed from registration
+        const storedEmail = sessionStorage.getItem('verifyEmail');
+        if (storedEmail) {
+            document.getElementById('email').value = storedEmail;
+        }
+
+    </script>
+</body>
+</html>

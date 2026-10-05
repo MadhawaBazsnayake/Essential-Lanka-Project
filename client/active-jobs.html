@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Jobs - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .page-section { padding: 50px 5%; min-height: 85vh; position: relative; }
+        .page-container { max-width: 1000px; margin: 0 auto; position: relative; z-index: 10; }
+        .header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; color: #666; text-decoration: none; font-weight: 700; transition: 0.3s; font-size: 1.05rem; }
+        .back-btn:hover { color: #10b981; }
+        .page-title { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; }
+        .glass-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 40px rgba(0,0,0,0.06); padding: 40px; border-radius: 35px; }
+        .job-card { background: #ffffff; border: 1.5px solid #f0ebe1; padding: 25px; border-radius: 25px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; transition: 0.3s; flex-wrap: wrap; gap: 20px; animation: fadeUp 0.5s ease forwards; }
+        .job-card:hover { border-color: #10b981; box-shadow: 0 12px 35px rgba(16,185,129,0.1); transform: translateY(-3px); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .job-info { display: flex; align-items: center; gap: 20px; }
+        .worker-avatar { width: 65px; height: 65px; border-radius: 50%; background-color: #e5dfd5; display: flex; justify-content: center; align-items: center; color: #a3a3a3; font-size: 2rem; border: 3px solid #ffffff; box-shadow: 0 5px 15px rgba(0,0,0,0.1); overflow: hidden;}
+        .worker-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .badge-active { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+        .action-group { display: flex; gap: 12px; }
+        .btn-outline { border: 2px solid #e5dfd5; background: transparent; color: #1a1a1a; padding: 12px 20px; border-radius: 50px; font-weight: 700; text-decoration: none; transition: 0.3s; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .btn-outline:hover:not(:disabled) { border-color: #ef4444; color: #ef4444; }
+        .btn-outline:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-primary-sm { background: #10b981; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 700; text-decoration: none; transition: 0.3s; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(16,185,129,0.2); display: flex; align-items: center; gap: 8px; }
+        .btn-primary-sm:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(16,185,129,0.3); }
+        .loading-state { text-align: center; padding: 40px; color: #64748b; }
+        @media (max-width: 768px) {
+            .job-card { flex-direction: column; align-items: flex-start; padding: 20px; }
+            .action-group { width: 100%; flex-direction: column; }
+            .btn-outline, .btn-primary-sm { width: 100%; justify-content: center; }
+            .header-action { flex-direction: column; align-items: flex-start; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="page-section bg-cream">
+    <div class="mesh-bg"></div>
+    <div class="page-container">
+        <div class="header-action fade-up show">
+            <h1 class="page-title">Active Jobs</h1>
+            <a href="dashboard.html" class="back-btn"><i class="ph-bold ph-arrow-left"></i> Back to Dashboard</a>
+        </div>
+        <div class="glass-box glass-premium fade-up show" style="transition-delay: 100ms;" id="jobsContainer">
+            <div class="loading-state"><i class="ph-bold ph-spinner-gap" style="animation: spin 1s linear infinite; font-size: 2rem;"></i><p>Loading active jobs...</p></div>
+        </div>
+    </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script type="module">
+    import { loadLayout } from '../js/layout.js';
+    import { supabase } from '../js/supabase-client.js';
+    import { sendBidAcceptedEmail } from '../js/email-service.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout();
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('id, role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'client') { window.location.href = '../login.html'; return; }
+
+        const userId = profile.id;
+
+        // Fetch active jobs
+        const { data: activeJobs, error } = await supabase.from('jobs')
+            .select(`
+                *,
+                worker:users!jobs_assigned_worker_id_fkey(first_name, last_name, phone, profile_pic),
+                bids(
+                    id, worker_id, amount, estimated_time, cover_letter, proposal, status, created_at,
+                    worker_user:users!bids_worker_id_fkey(id, first_name, last_name, phone, profile_pic)
+                )
+            `)
+            .eq('client_id', userId)
+            .in('status', ['open', 'in_progress'])
+            .order('created_at', { ascending: false });
+
+        const container = document.getElementById('jobsContainer');
+
+        if (error) {
+            console.error(error);
+            container.innerHTML = `<div style="text-align:center; color:#ef4444;">Failed to load active jobs.</div>`;
+            return;
+        }
+
+        if (!activeJobs || activeJobs.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center; padding: 40px; color:#64748b;">
+                    <i class="ph-fill ph-clock-counter-clockwise" style="font-size: 3rem; margin-bottom: 10px; color:#cbd5e1;"></i>
+                    <p>You have no active or pending requests at the moment.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        activeJobs.forEach(job => {
+            const isInProgress = job.status === 'in_progress';
+            const statusLabel = isInProgress ? 'In Progress' : 'Waiting for Bids';
+            const badgeClass = isInProgress ? 'badge-active' : 'badge-pending';
+            const icon = isInProgress ? 'ph-circle-notch' : 'ph-hourglass-high';
+            const spin = isInProgress ? 'style="animation: spin 2s linear infinite;"' : '';
+            
+            const workerName = job.worker ? `${job.worker.first_name} ${job.worker.last_name || ''}` : '';
+            const workerPic = job.worker && job.worker.profile_pic ? `<img src="../${job.worker.profile_pic}" alt="Worker">` : `<i class="ph-fill ph-user"></i>`;
+            
+            const pendingBids = (job.bids || []).filter(b => b.status === 'pending');
+            const bidCount = pendingBids.length;
+
+            let actionHtml = '';
+            let metaHtml = '';
+
+            if (isInProgress) {
+                metaHtml = `
+                    <p style="font-size: 0.95rem; color: #666;"><i class="ph-fill ph-user"></i> Assigned: <strong>${workerName}</strong> ${job.worker?.phone ? `• <i class="ph-fill ph-phone"></i> ${job.worker.phone}` : ''}</p>
+                    <p style="font-size: 0.9rem; color: #10b981; font-weight: 700; margin-top: 4px;"><i class="ph-fill ph-check-circle"></i> Agreed Amount: Rs. ${parseFloat(job.accepted_bid_amount || job.budget || 0).toLocaleString()}</p>
+                `;
+                actionHtml = `
+                    <a href="chat.html?job_id=${job.id}&worker_id=${job.assigned_worker_id}" class="btn-outline" style="border-color:#3b82f6; color:#3b82f6;"><i class="ph-bold ph-chats"></i> Chat</a>
+                    <a href="payments.html?job_id=${job.id}" class="btn-primary-sm"><i class="ph-bold ph-credit-card"></i> Pay Worker</a>
+                `;
+            } else {
+                metaHtml = `
+                    <p style="font-size: 0.95rem; color: #666;">Requested on ${new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • Budget: Rs. ${parseFloat(job.budget || 0).toLocaleString()}</p>
+                    <p style="font-size: 0.9rem; color: #3b82f6; font-weight: 700; margin-top: 4px;"><i class="ph-fill ph-users"></i> ${bidCount} worker proposal(s) received</p>
+                `;
+                actionHtml = `
+                    <button class="btn-primary-sm" style="background: #3b82f6;" onclick="window.viewBids(${job.id})"><i class="ph-bold ph-tag"></i> View Bids (${bidCount})</button>
+                    <button class="btn-outline" style="color: #ef4444; border-color: #ef4444;" onclick="window.cancelJob(${job.id})"><i class="ph-bold ph-x-circle"></i> Cancel</button>
+                `;
+            }
+
+            html += `
+                <div class="job-card" id="job-card-${job.id}">
+                    <div class="job-info">
+                        <div class="worker-avatar">
+                            ${workerPic}
+                        </div>
+                        <div>
+                            <span class="${badgeClass}"><i class="ph-fill ${icon}" ${spin}></i> ${statusLabel}</span>
+                            <h3 style="font-size: 1.2rem; font-weight: 800; color: #1a1a1a; margin-bottom: 4px;">${job.title}</h3>
+                            ${metaHtml}
+                        </div>
+                    </div>
+                    <div class="action-group">
+                        ${actionHtml}
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+        // View Bids function
+        window.activeJobsCache = activeJobs;
+        window.viewBids = function(jobId) {
+            const job = window.activeJobsCache.find(j => j.id === jobId);
+            if (!job) return;
+
+            document.getElementById('bidsModalJobTitle').textContent = job.title;
+            document.getElementById('bidsModalJobBudget').textContent = `Budget: Rs. ${parseFloat(job.budget || 0).toLocaleString()}`;
+
+            const bidsListContainer = document.getElementById('bidsListContainer');
+            const bids = job.bids || [];
+
+            if (bids.length === 0) {
+                bidsListContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: #64748b;">
+                        <i class="ph-fill ph-hourglass-empty" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 10px;"></i>
+                        <h4 style="font-weight: 700; color: #334155;">No Bids Yet</h4>
+                        <p style="font-size: 0.9rem;">Workers in your category are being notified. Please check back shortly.</p>
+                    </div>
+                `;
+            } else {
+                bidsListContainer.innerHTML = bids.map(bid => {
+                    const w = bid.worker_user || {};
+                    const wName = `${w.first_name || 'Worker'} ${w.last_name || ''}`;
+                    const wPic = w.profile_pic ? `<img src="../${w.profile_pic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : `<i class="ph-fill ph-user" style="font-size: 1.5rem;"></i>`;
+                    const date = new Date(bid.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const proposalText = bid.proposal || bid.cover_letter || 'No message provided.';
+                    const isAccepted = bid.status === 'accepted';
+                    const isRejected = bid.status === 'rejected';
+
+                    let bidAction = '';
+                    if (isAccepted) {
+                        bidAction = `<span style="background: rgba(16,185,129,0.1); color: #10b981; padding: 6px 14px; border-radius: 50px; font-weight: 800; font-size: 0.85rem;"><i class="ph-fill ph-check-circle"></i> Accepted</span>`;
+                    } else if (isRejected) {
+                        bidAction = `<span style="background: rgba(239,68,68,0.1); color: #ef4444; padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.85rem;">Declined</span>`;
+                    } else {
+                        bidAction = `
+                            <button type="button" class="btn-primary-sm" style="background:#10b981;" onclick="window.acceptBid(${job.id}, ${bid.id}, ${bid.worker_id}, ${bid.amount}, '${wName}')">
+                                <i class="ph-bold ph-check"></i> Accept Bid
+                            </button>
+                        `;
+                    }
+
+                    return `
+                        <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; transition: 0.2s;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 48px; height: 48px; border-radius: 50%; background: #f1f5f9; display: flex; justify-content: center; align-items: center; border: 2px solid #e2e8f0;">
+                                        ${wPic}
+                                    </div>
+                                    <div>
+                                        <h4 style="font-weight: 800; color: #1e293b; margin: 0; font-size: 1.05rem;">${wName}</h4>
+                                        <span style="font-size: 0.8rem; color: #64748b;">${date} ${bid.estimated_time ? `• Est. Time: <strong>${bid.estimated_time}</strong>` : ''}</span>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 1.3rem; font-weight: 800; color: #10b981;">Rs. ${parseFloat(bid.amount).toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div style="background: #f8fafc; padding: 12px 16px; border-radius: 12px; font-size: 0.92rem; color: #475569; border-left: 3px solid #3b82f6;">
+                                "${proposalText}"
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 5px;">
+                                <a href="chat.html?job_id=${job.id}&worker_id=${bid.worker_id}" class="btn-outline" style="padding: 8px 16px; font-size: 0.9rem; border-color: #cbd5e1;"><i class="ph-bold ph-chats"></i> Message</a>
+                                ${bidAction}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('bidsModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeBidsModal = function() {
+            document.getElementById('bidsModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        };
+
+        // Accept Bid function
+        window.acceptBid = async function(jobId, bidId, workerId, bidAmount, workerName) {
+            const confirmed = await Swal.fire({
+                title: 'Accept Proposal?',
+                text: `Do you want to accept ${workerName}'s bid of Rs. ${parseFloat(bidAmount).toLocaleString()}? This will assign the worker and start the job.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, Accept & Assign!'
+            });
+
+            if (!confirmed.isConfirmed) return;
+
+            Swal.fire({ title: 'Assigning Worker...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                // 1. Mark this bid accepted
+                const { error: bidErr } = await supabase.from('bids').update({ status: 'accepted' }).eq('id', bidId);
+                if (bidErr) throw bidErr;
+
+                // 2. Reject other bids for this job
+                await supabase.from('bids').update({ status: 'rejected' }).eq('job_id', jobId).neq('id', bidId);
+
+                // 3. Update job status to in_progress and assign worker
+                const platformFee = parseFloat(bidAmount) * 0.05;
+                const { error: jobErr } = await supabase.from('jobs').update({
+                    status: 'in_progress',
+                    assigned_worker_id: workerId,
+                    accepted_bid_amount: bidAmount,
+                    platform_fee: platformFee
+                }).eq('id', jobId);
+
+                if (jobErr) throw jobErr;
+
+                try {
+                    // Fetch worker email and job title for email notification
+                    const { data: workerUser } = await supabase.from('users').select('email').eq('id', workerId).single();
+                    const { data: jobInfo } = await supabase.from('jobs').select('title').eq('id', jobId).single();
+                    const clientName = currentUserProfile?.first_name ? (currentUserProfile.first_name + " " + currentUserProfile.last_name) : "Client";
+                    if (workerUser?.email && jobInfo?.title) {
+                        await sendBidAcceptedEmail(workerUser.email, jobInfo.title, clientName);
+                    }
+                } catch(e) { console.error('Email error:', e); }
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Worker Assigned!',
+                    text: `${workerName} has been assigned to your job. You can now communicate via chat or proceed to payments when ready.`,
+                    confirmButtonColor: '#10b981'
+                });
+
+                window.closeBidsModal();
+                location.reload();
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Error', 'Could not accept bid. Please try again.', 'error');
+            }
+        };
+
+        // Attach cancel function to window for the onclick handler
+        window.cancelJob = async function(jobId) {
+            const result = await Swal.fire({
+                title: 'Cancel Job Request?',
+                text: 'Are you sure you want to cancel this job request? This cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, Cancel Job'
+            });
+
+            if (result.isConfirmed) {
+                const { error } = await supabase.from('jobs').update({ status: 'cancelled' }).eq('id', jobId);
+                if (error) {
+                    console.error(error);
+                    Swal.fire('Error', 'Could not cancel job.', 'error');
+                } else {
+                    Swal.fire('Cancelled!', 'Your job request has been cancelled.', 'success');
+                    document.getElementById(`job-card-${jobId}`).remove();
+                    if(document.querySelectorAll('.job-card').length === 0) {
+                        document.getElementById('jobsContainer').innerHTML = `
+                            <div style="text-align:center; padding: 40px; color:#64748b;">
+                                <i class="ph-fill ph-clock-counter-clockwise" style="font-size: 3rem; margin-bottom: 10px; color:#cbd5e1;"></i>
+                                <p>You have no active or pending requests at the moment.</p>
+                            </div>
+                        `;
+                    }
+                }
+            }
+        };
+    });
+</script>
+
+<!-- Bids Modal -->
+<div class="modal-overlay" id="bidsModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); z-index:9999; display:none; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#fff; width:100%; max-width:650px; border-radius:28px; padding:35px; box-shadow:0 25px 50px rgba(0,0,0,0.2); max-height:85vh; display:flex; flex-direction:column; position:relative;">
+        <button onclick="window.closeBidsModal()" style="position:absolute; top:25px; right:25px; background:none; border:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;"><i class="ph-bold ph-x"></i></button>
+        <div style="margin-bottom: 20px;">
+            <span style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #3b82f6; letter-spacing: 0.5px;">Job Proposals</span>
+            <h2 id="bidsModalJobTitle" style="font-size: 1.5rem; font-weight: 800; color: #1e293b; margin: 4px 0;">Job Title</h2>
+            <p id="bidsModalJobBudget" style="font-size: 0.95rem; color: #64748b; font-weight: 600;">Budget</p>
+        </div>
+        <div id="bidsListContainer" style="overflow-y:auto; flex:1; padding-right:5px;">
+            <!-- Bids injected dynamically -->
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay.active { display: flex !important; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+</body>
+</html>
+

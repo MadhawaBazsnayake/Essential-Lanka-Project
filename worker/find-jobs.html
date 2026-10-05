@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Jobs - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .page-section { padding: 50px 5%; min-height: 85vh; position: relative; }
+        .page-container { max-width: 1000px; margin: 0 auto; position: relative; z-index: 10; }
+        
+        .header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; color: #666; text-decoration: none; font-weight: 700; transition: 0.3s; font-size: 1.05rem; }
+        .back-btn:hover { color: #10b981; }
+        .page-title { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; }
+
+        .filter-bar { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 35px rgba(0,0,0,0.05); padding: 20px; border-radius: 25px; margin-bottom: 35px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; animation: fadeUp 0.5s ease forwards; }
+        .search-input { flex: 1; position: relative; min-width: 200px; }
+        .search-input i { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: #a3a3a3; }
+        .search-input input { width: 100%; padding: 15px 20px 15px 50px; border-radius: 15px; border: 2px solid #e5dfd5; background: #ffffff; font-size: 1rem; outline: none; transition: 0.3s; }
+        .search-input input:focus { border-color: #3b82f6; }
+        
+        .filter-btn { background: #1a1a1a; color: white; padding: 15px 25px; border-radius: 15px; font-weight: 700; border: none; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .filter-btn:hover { background: #000000; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+        .btn-near-me { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 15px 20px; border-radius: 15px; font-weight: 700; border: none; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 20px rgba(16,185,129,0.2); white-space: nowrap; }
+        .btn-near-me:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(16,185,129,0.3); }
+        .btn-near-me.active { background: #10b981; }
+
+        .glass-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 40px rgba(0,0,0,0.06); padding: 40px; border-radius: 35px; animation: fadeUp 0.6s ease forwards; }
+        
+        .job-card { background: #ffffff; border: 1.5px solid #f0ebe1; padding: 25px; border-radius: 25px; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; transition: 0.3s; flex-wrap: wrap; gap: 20px; }
+        .job-card:hover { border-color: #3b82f6; box-shadow: 0 12px 35px rgba(59,130,246,0.1); transform: translateY(-3px); }
+        
+        .job-info { flex: 1; }
+        
+        .badge-standard { background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 12px; }
+
+        .job-meta { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+        .job-meta span { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #666; background: #f8fafc; padding: 8px 15px; border-radius: 10px; border: 1px solid #e2e8f0; }
+
+        .job-desc { color: #666; font-size: 0.95rem; line-height: 1.6; margin-top: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .action-group { display: flex; flex-direction: column; gap: 12px; min-width: 180px; }
+        .price-tag { font-size: 1.5rem; font-weight: 800; color: #1a1a1a; text-align: center; margin-bottom: 5px; }
+        .btn-bid { background: #3b82f6; color: white; padding: 14px 25px; border-radius: 50px; font-weight: 800; text-decoration: none; transition: 0.3s; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(59,130,246,0.2); display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%; font-size: 1.05rem; }
+        .btn-bid:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(59,130,246,0.3); background: #2563eb; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.3s; padding: 20px; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #ffffff; width: 100%; max-width: 550px; border-radius: 30px; padding: 35px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); transform: translateY(30px) scale(0.95); transition: 0.4s; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
+        .close-btn { position: absolute; top: 25px; right: 25px; font-size: 1.5rem; color: #a3a3a3; cursor: pointer; transition: 0.3s; border: none; background: transparent; }
+        .close-btn:hover { color: #ef4444; transform: rotate(90deg); }
+        .modal-title { font-size: 1.6rem; font-weight: 800; color: #1a1a1a; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; color: #1a1a1a; }
+        .form-control { width: 100%; padding: 15px 20px; border-radius: 15px; border: 2px solid #e5dfd5; background: #f8fafc; font-size: 1rem; transition: 0.3s; outline: none; font-weight: 500; font-family: inherit; }
+        .form-control:focus { border-color: #3b82f6; background: #ffffff; box-shadow: 0 0 0 4px rgba(59,130,246,0.1); }
+        select.form-control { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%231a1a1a" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></svg>'); background-repeat: no-repeat; background-position: right 15px center; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .filter-bar { flex-direction: column; }
+            .search-input, .filter-btn { width: 100%; }
+            .job-card { flex-direction: column; }
+            .action-group { width: 100%; margin-top: 15px; border-top: 1px solid #f0ebe1; padding-top: 20px; }
+            .header-action { flex-direction: column; align-items: flex-start; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="page-section bg-cream">
+    <div class="mesh-bg"></div>
+    <div class="page-container">
+        
+        <div class="header-action fade-up show">
+            <h1 class="page-title">Find Jobs</h1>
+            <a href="dashboard.html" class="back-btn"><i class="ph-bold ph-arrow-left"></i> Back to Dashboard</a>
+        </div>
+
+        <div class="filter-bar">
+            <div class="search-input">
+                <i class="ph-bold ph-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Search for jobs...">
+            </div>
+            
+            <div style="display:flex; gap:10px; flex:1; min-width: 300px;">
+                <select id="provinceFilter" class="form-control" style="padding:15px; border-radius:15px;">
+                    <option value="">All Provinces</option>
+                </select>
+                <select id="districtFilter" class="form-control" style="padding:15px; border-radius:15px;" disabled>
+                    <option value="">All Districts</option>
+                </select>
+            </div>
+
+            <button type="button" class="btn-near-me" id="btnNearMe">
+                <i class="ph-bold ph-crosshair"></i> Near Me (5km)
+            </button>
+            <button type="button" class="filter-btn" style="background:#ef4444; display:none;" id="btnClear"><i class="ph-bold ph-x"></i> Clear</button>
+        </div>
+
+        <div class="glass-box glass-premium" id="jobsContainer">
+            <div style="text-align:center; padding: 40px; color:#64748b;">Loading jobs...</div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal -->
+<div class="modal-overlay" id="bidModal">
+    <div class="modal-box">
+        <button class="close-btn" onclick="document.getElementById('bidModal').classList.remove('active')"><i class="ph-bold ph-x"></i></button>
+        <h2 class="modal-title">Submit Bid</h2>
+        <form id="bidForm">
+            <input type="hidden" id="bidJobId">
+            <input type="hidden" id="maxBudgetLimit">
+            <div class="form-group">
+                <label>Bid Amount (Rs.)</label>
+                <input type="number" class="form-control" id="bidAmount" required>
+            </div>
+            <div class="form-group">
+                <label>Estimated Time</label>
+                <select class="form-control" id="bidTimeInput" required>
+                    <option value="1_hour">1 Hour</option>
+                    <option value="2_hours">2 Hours</option>
+                    <option value="half_day">Half Day</option>
+                    <option value="full_day">Full Day</option>
+                    <option value="multiple_days">Multiple Days</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Message</label>
+                <textarea class="form-control" id="bidMessage" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn-bid" id="confirmBidBtn">Confirm Bid</button>
+        </form>
+    </div>
+</div>
+
+<script type="module">
+    import { loadLayout } from '../js/layout.js';
+    import { supabase } from '../js/supabase-client.js';
+
+    let currentUserId = null;
+    let workerCategoryId = null;
+    let allJobs = [];
+    let myBidJobIds = [];
+    
+    let userLat = null, userLng = null, isNearMe = false;
+
+    const sriLankaLocations = {
+        'Western': ['Colombo', 'Gampaha', 'Kalutara'],
+        'Central': ['Kandy', 'Matale', 'Nuwara Eliya'],
+        'Southern': ['Galle', 'Matara', 'Hambantota'],
+        'Northern': ['Jaffna', 'Kilinochchi', 'Mannar', 'Mullaitivu', 'Vavuniya'],
+        'Eastern': ['Ampara', 'Batticaloa', 'Trincomalee'],
+        'North Western': ['Kurunegala', 'Puttalam'],
+        'North Central': ['Anuradhapura', 'Polonnaruwa'],
+        'Uva': ['Badulla', 'Monaragala'],
+        'Sabaragamuwa': ['Ratnapura', 'Kegalle'],
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout();
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('id, role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'worker') { window.location.href = '../login.html'; return; }
+        currentUserId = profile.id;
+
+        const { data: wpData } = await supabase.from('worker_profiles').select('category_id').eq('worker_id', currentUserId).single();
+        workerCategoryId = wpData ? wpData.category_id : null;
+
+        initFilters();
+        await fetchJobs();
+
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('provinceFilter').addEventListener('change', (e) => {
+            updateDistrictDropdown(e.target.value);
+            applyFilters();
+        });
+        document.getElementById('districtFilter').addEventListener('change', applyFilters);
+        
+        document.getElementById('btnNearMe').addEventListener('click', toggleNearMe);
+        document.getElementById('btnClear').addEventListener('click', clearFilters);
+        
+        document.getElementById('bidForm').addEventListener('submit', submitBid);
+    });
+
+    function initFilters() {
+        const provSel = document.getElementById('provinceFilter');
+        Object.keys(sriLankaLocations).forEach(p => {
+            provSel.insertAdjacentHTML('beforeend', `<option value="${p}">${p}</option>`);
+        });
+    }
+
+    function updateDistrictDropdown(province) {
+        const distSel = document.getElementById('districtFilter');
+        distSel.innerHTML = '<option value="">All Districts</option>';
+        if (province && sriLankaLocations[province]) {
+            sriLankaLocations[province].forEach(d => {
+                distSel.insertAdjacentHTML('beforeend', `<option value="${d}">${d}</option>`);
+            });
+            distSel.disabled = false;
+        } else {
+            distSel.disabled = true;
+        }
+    }
+
+    async function fetchJobs() {
+        if (!workerCategoryId) {
+            document.getElementById('jobsContainer').innerHTML = '<div style="text-align:center; padding: 40px; color:#64748b;">Please setup your worker category first.</div>';
+            return;
+        }
+
+        const [jobsRes, bidsRes] = await Promise.all([
+            supabase.from('jobs').select('*').eq('status', 'open').eq('category_id', workerCategoryId).order('created_at', { ascending: false }),
+            supabase.from('bids').select('job_id').eq('worker_id', currentUserId)
+        ]);
+
+        if (jobsRes.error) {
+            document.getElementById('jobsContainer').innerHTML = '<div style="text-align:center; padding: 40px; color:#ef4444;">Failed to load jobs.</div>';
+            return;
+        }
+
+        allJobs = jobsRes.data || [];
+        myBidJobIds = bidsRes.data ? bidsRes.data.map(b => b.job_id) : [];
+
+        applyFilters();
+    }
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; 
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    function toggleNearMe() {
+        if (isNearMe) {
+            isNearMe = false;
+            userLat = null;
+            userLng = null;
+            document.getElementById('btnNearMe').classList.remove('active');
+            document.getElementById('btnNearMe').innerHTML = '<i class="ph-bold ph-crosshair"></i> Near Me (5km)';
+            applyFilters();
+            return;
+        }
+
+        const btn = document.getElementById('btnNearMe');
+        btn.innerHTML = '<i class="ph-bold ph-spinner-gap" style="animation:spin 1s linear infinite;"></i> Locating...';
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    userLat = pos.coords.latitude;
+                    userLng = pos.coords.longitude;
+                    isNearMe = true;
+                    btn.classList.add('active');
+                    btn.innerHTML = '<i class="ph-fill ph-check-circle"></i> Showing Near Me';
+                    applyFilters();
+                },
+                err => {
+                    Swal.fire('Error', 'Location access denied.', 'error');
+                    btn.innerHTML = '<i class="ph-bold ph-crosshair"></i> Near Me (5km)';
+                }
+            );
+        }
+    }
+
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('provinceFilter').value = '';
+        updateDistrictDropdown('');
+        isNearMe = false;
+        document.getElementById('btnNearMe').classList.remove('active');
+        document.getElementById('btnNearMe').innerHTML = '<i class="ph-bold ph-crosshair"></i> Near Me (5km)';
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const prov = document.getElementById('provinceFilter').value;
+        const dist = document.getElementById('districtFilter').value;
+        const clearBtn = document.getElementById('btnClear');
+
+        if (search || prov || dist || isNearMe) clearBtn.style.display = 'inline-flex';
+        else clearBtn.style.display = 'none';
+
+        let filtered = allJobs.filter(j => !myBidJobIds.includes(j.id));
+
+        if (search) {
+            filtered = filtered.filter(j => (j.title && j.title.toLowerCase().includes(search)) || (j.description && j.description.toLowerCase().includes(search)));
+        }
+        if (prov) filtered = filtered.filter(j => j.province === prov);
+        if (dist) filtered = filtered.filter(j => j.district === dist);
+
+        if (isNearMe && userLat && userLng) {
+            filtered = filtered.map(j => {
+                j.distance = getDistance(userLat, userLng, j.location_lat, j.location_lng);
+                return j;
+            }).filter(j => j.distance <= 5).sort((a,b) => a.distance - b.distance);
+        }
+
+        renderJobs(filtered);
+    }
+
+    function renderJobs(jobs) {
+        if (jobs.length === 0) {
+            document.getElementById('jobsContainer').innerHTML = '<div style="text-align:center; padding: 40px; color:#64748b;">No open jobs found matching your criteria.</div>';
+            return;
+        }
+
+        let html = '';
+        jobs.forEach(job => {
+            const dt = new Date(job.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+            let distHtml = '';
+            if (job.distance) {
+                distHtml = `<span style="background: rgba(16,185,129,0.1); color: #10b981; border-color: rgba(16,185,129,0.3);"><i class="ph-fill ph-navigation-arrow"></i> ${job.distance.toFixed(1)} km away</span>`;
+            }
+
+            let imagesHtml = '';
+            if (job.image_1 || job.image_2) {
+                imagesHtml = `<div style="display:flex; gap:10px; margin-top:12px; margin-bottom: 12px;">`;
+                if (job.image_1) imagesHtml += `<a href="${job.image_1}" target="_blank"><img src="${job.image_1}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0;"></a>`;
+                if (job.image_2) imagesHtml += `<a href="${job.image_2}" target="_blank"><img src="${job.image_2}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0;"></a>`;
+                imagesHtml += `</div>`;
+            }
+
+            html += `
+                <div class="job-card">
+                    <div class="job-info">
+                        <span class="badge-standard"><i class="ph-fill ph-lightning"></i> Open Request</span>
+                        <h3 style="font-size: 1.4rem; font-weight: 800;">${job.title}</h3>
+                        <p class="job-desc">${job.description}</p>
+                        
+                        ${imagesHtml}
+
+                        <div class="job-meta">
+                            <span><i class="ph-bold ph-map-pin"></i> ${job.district || ''}, ${job.province || ''}</span>
+                            <span><i class="ph-bold ph-calendar"></i> ${dt}</span>
+                            ${distHtml}
+                        </div>
+                    </div>
+                    
+                    <div class="action-group">
+                        <div class="price-tag">Rs. ${parseFloat(job.budget || 0).toFixed(2)}</div>
+                        <button class="btn-bid" onclick="window.triggerBid(${job.id}, ${job.budget})"><i class="ph-bold ph-handshake"></i> Send Bid</button>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('jobsContainer').innerHTML = html;
+    }
+
+    window.triggerBid = function(jobId, budget) {
+        document.getElementById('bidJobId').value = jobId;
+        document.getElementById('bidAmount').value = budget;
+        document.getElementById('maxBudgetLimit').value = budget;
+        document.getElementById('bidModal').classList.add('active');
+    };
+
+    async function submitBid(e) {
+        e.preventDefault();
+        const amount = parseFloat(document.getElementById('bidAmount').value);
+        const max = parseFloat(document.getElementById('maxBudgetLimit').value);
+        
+        if (amount > max) {
+            Swal.fire('Error', `Your bid cannot exceed Rs. ${max.toFixed(2)}`, 'error');
+            return;
+        }
+
+        const btn = document.getElementById('confirmBidBtn');
+        const ogHtml = btn.innerHTML;
+        btn.innerHTML = 'Sending...';
+        btn.disabled = true;
+
+        const payload = {
+            job_id: document.getElementById('bidJobId').value,
+            worker_id: currentUserId,
+            amount: amount,
+            estimated_time: document.getElementById('bidTimeInput').value,
+            cover_letter: document.getElementById('bidMessage').value,
+            proposal: document.getElementById('bidMessage').value,
+            status: 'pending'
+        };
+
+        const { error } = await supabase.from('bids').insert([payload]);
+
+        if (error) {
+            console.error(error);
+            Swal.fire('Error', error.message || 'Could not submit bid. You may have already bid on this job.', 'error');
+        } else {
+            Swal.fire('Success', 'Your proposal has been sent!', 'success').then(() => {
+                document.getElementById('bidModal').classList.remove('active');
+                fetchJobs(); // refresh list
+            });
+        }
+        
+        btn.innerHTML = ogHtml;
+        btn.disabled = false;
+    }
+</script>
+</body>
+</html>
+
