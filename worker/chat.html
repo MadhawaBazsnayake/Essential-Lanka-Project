@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <style>
+        body { overflow: hidden; }
+        .chat-section { padding: 30px 5%; height: 100vh; position: relative; display: flex; align-items: center; justify-content: center; }
+        
+        .chat-container { width: 100%; max-width: 1300px; height: calc(100vh - 60px); background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 25px 50px rgba(0,0,0,0.08); border-radius: 35px; display: grid; grid-template-columns: 350px 1fr; overflow: hidden; position: relative; z-index: 10; animation: fadeUp 0.5s ease forwards; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Left Sidebar: Contacts */
+        .chat-sidebar { border-right: 1.5px solid #f0ebe1; background: rgba(255,255,255,0.5); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 25px; border-bottom: 1.5px solid #f0ebe1; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-header h2 { font-size: 1.5rem; font-weight: 800; color: #1a1a1a; display: flex; align-items: center; gap: 8px; }
+        .btn-back { width: 40px; height: 40px; border-radius: 50%; background: #ffffff; border: 1px solid #e5dfd5; display: flex; justify-content: center; align-items: center; color: #666; transition: 0.3s; text-decoration: none; font-size: 1.2rem; cursor: pointer; }
+        .btn-back:hover { background: #f8fafc; color: #1a1a1a; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        
+        .contact-list { overflow-y: auto; flex: 1; padding: 15px; }
+        .contact-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 20px; cursor: pointer; transition: 0.3s; margin-bottom: 5px; border: 1.5px solid transparent; text-decoration: none; color: inherit; }
+        .contact-item:hover { background: #ffffff; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
+        .contact-item.active { background: #ffffff; border-color: #10b981; box-shadow: 0 10px 25px rgba(16,185,129,0.1); }
+        
+        .contact-avatar { width: 50px; height: 50px; border-radius: 50%; background: #e2e8f0; display: flex; justify-content: center; align-items: center; color: #64748b; font-weight: 700; font-size: 1.1rem; position: relative; flex-shrink: 0; }
+        .contact-item.active .contact-avatar { background: rgba(16,185,129,0.1); color: #10b981; }
+        .status-dot { position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #10b981; border: 2px solid #ffffff; border-radius: 50%; }
+
+        .contact-info { flex: 1; overflow: hidden; }
+        .contact-info h4 { font-size: 1rem; font-weight: 700; color: #1a1a1a; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .contact-info p { font-size: 0.85rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .lock-badge { background: rgba(239,68,68,0.1); color: #ef4444; font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 50px; flex-shrink: 0; display: flex; align-items: center; gap: 3px; }
+
+        /* Right Side: Chat Window */
+        .chat-window { display: flex; flex-direction: column; background: #ffffff; position: relative; }
+        
+        .chat-header { padding: 20px 30px; border-bottom: 1.5px solid #f0ebe1; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); z-index: 10; }
+        .chat-user-info { display: flex; align-items: center; gap: 15px; }
+        .chat-user-info h3 { font-size: 1.2rem; font-weight: 800; color: #1a1a1a; margin-bottom: 2px; }
+        .chat-user-info p { font-size: 0.85rem; color: #10b981; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+
+        .chat-messages { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: #e5ddd5; }
+        
+        .msg-bubble { max-width: 70%; padding: 10px 15px; font-size: 0.95rem; line-height: 1.4; position: relative; word-wrap: break-word; min-width: 80px; }
+        .msg-received { align-self: flex-start; background: #ffffff; color: #1a1a1a; border-radius: 0 15px 15px 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: none; }
+        .msg-sent { align-self: flex-end; background: #dcf8c6; color: #1a1a1a; border-radius: 15px 0 15px 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .msg-time { font-size: 0.65rem; margin-top: 5px; display: flex; align-items: center; justify-content: flex-end; gap: 4px; color: #667781; }
+        
+        .chat-locked-banner { background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 1.5px solid #fca5a5; border-radius: 15px; padding: 14px 20px; margin: 15px 30px 0; display: flex; align-items: center; gap: 10px; }
+        .chat-locked-banner i { font-size: 1.4rem; color: #ef4444; }
+        .chat-locked-banner div h4 { font-size: 0.9rem; font-weight: 800; color: #991b1b; }
+        .chat-locked-banner div p { font-size: 0.78rem; color: #b91c1c; margin-top: 2px; }
+
+        /* Chat Input Area */
+        .chat-input-area { padding: 20px 30px; border-top: 1.5px solid #f0ebe1; background: #ffffff; display: flex; align-items: center; gap: 12px; }
+        .btn-attach { width: 45px; height: 45px; border-radius: 50%; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; justify-content: center; align-items: center; color: #64748b; font-size: 1.2rem; cursor: pointer; transition: 0.3s; flex-shrink: 0; }
+        .btn-attach:hover { background: #e2e8f0; color: #1a1a1a; transform: translateY(-2px); }
+        .input-wrapper { flex: 1; position: relative; display: flex; align-items: center; }
+        .chat-input { width: 100%; padding: 15px 20px; border-radius: 50px; border: 2px solid #e5dfd5; background: #f8fafc; font-size: 0.95rem; font-family: inherit; outline: none; transition: 0.3s; }
+        .chat-input:focus { border-color: #10b981; background: #ffffff; box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
+        .btn-send { width: 50px; height: 50px; border-radius: 50%; background: #1a1a1a; border: none; color: white; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.15); flex-shrink: 0; }
+        .btn-send:hover { background: #10b981; transform: scale(1.05); box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
+
+        /* Empty State */
+        .chat-empty { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; background: #f8fafc; color: #a3a3a3; text-align: center; }
+        .chat-empty i { font-size: 5rem; margin-bottom: 15px; color: #cbd5e1; }
+        .chat-empty h3 { font-size: 1.5rem; font-weight: 800; color: #64748b; margin-bottom: 5px; }
+
+        @media (max-width: 992px) {
+            .chat-container { grid-template-columns: 1fr; }
+            .chat-sidebar { display: var(--show-sidebar, flex); }
+            .chat-window, .chat-empty { display: var(--show-chat, none); }
+        }
+    </style>
+</head>
+<body>
+
+<section class="chat-section bg-cream">
+    <div class="mesh-bg"></div>
+    <div class="chat-container fade-up show" id="chatRoot">
+        
+        <!-- Left Sidebar: Contact List -->
+        <div class="chat-sidebar">
+            <div class="sidebar-header">
+                <h2><i class="ph-fill ph-chats" style="color: #10b981;"></i> Messages</h2>
+                <a href="dashboard.html" class="btn-back" title="Back to Dashboard"><i class="ph-bold ph-x"></i></a>
+            </div>
+            <div class="contact-list" id="contactList">
+                <div style="text-align: center; padding: 20px; color: #a3a3a3;">Loading contacts...</div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Default Empty State -->
+        <div class="chat-empty" id="chatEmpty">
+            <i class="ph-fill ph-chats-teardrop"></i>
+            <h3>Your Messages</h3>
+            <p>Select a worker from the left menu to start chatting.</p>
+        </div>
+
+        <!-- Right Panel: Active Chat Window -->
+        <div class="chat-window" id="chatWindow" style="display: none;">
+            <div class="chat-header">
+                <div class="chat-user-info">
+                    <button class="btn-back" style="display: none; margin-right: 5px; border:none;" id="mobileBackBtn"><i class="ph-bold ph-arrow-left"></i></button>
+                    <div class="contact-avatar" id="activeAvatar"></div>
+                    <div>
+                        <h3 id="activeWorkerName">Loading...</h3>
+                        <p><span class="status-dot" style="position:relative; bottom:0; right:0; display:inline-block;"></span> <span id="activeJobText"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-locked-banner" id="chatLockedBanner" style="display: none;">
+                <i class="ph-fill ph-lock-simple-open"></i>
+                <div>
+                    <h4>Chat Archived</h4>
+                    <p>This conversation has been archived. No new messages can be sent.</p>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div style="text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: 20px;">
+                    Loading messages...
+                </div>
+            </div>
+
+            <div class="chat-input-area" id="chatInputArea">
+                <div class="input-wrapper">
+                    <input type="text" id="messageInput" class="chat-input" placeholder="Type your message to worker...">
+                </div>
+                <button class="btn-send" id="btnSend" title="Send"><i class="ph-bold ph-paper-plane-right"></i></button>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script type="module">
+    import { supabase } from '../js/supabase-client.js';
+
+    let currentUserId = null;
+    let activeClientId = null;
+    let activeJobId = null;
+    let isJobLocked = false;
+    let currentSubscription = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        activeClientId = urlParams.get('client_id') || urlParams.get('worker_id'); // support both for backward compatibility
+        activeJobId = urlParams.get('job_id');
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('id, role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'worker') { window.location.href = '../login.html'; return; }
+        
+        currentUserId = profile.id;
+
+        setupMobileView();
+        await loadContacts();
+        
+        if (activeClientId && activeJobId) {
+            await loadActiveChat(activeClientId, activeJobId);
+        }
+
+        document.getElementById('mobileBackBtn').addEventListener('click', () => {
+            window.location.href = 'chat.html';
+        });
+
+        document.getElementById('btnSend').addEventListener('click', sendMessage);
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    });
+
+    function setupMobileView() {
+        const root = document.getElementById('chatRoot');
+        if (window.innerWidth <= 992) {
+            if (activeClientId && activeJobId) {
+                root.style.setProperty('--show-sidebar', 'none');
+                root.style.setProperty('--show-chat', 'flex');
+                document.getElementById('mobileBackBtn').style.display = 'flex';
+            } else {
+                root.style.setProperty('--show-sidebar', 'flex');
+                root.style.setProperty('--show-chat', 'none');
+            }
+        }
+    }
+
+    async function loadContacts() {
+        // Find jobs where worker is assigned OR has placed a bid
+        const { data: bids } = await supabase.from('bids').select('job_id').eq('worker_id', currentUserId);
+        const bidJobIds = (bids || []).map(b => b.job_id);
+
+        let query = supabase.from('jobs')
+            .select(`
+                id, title, status, client_id, assigned_worker_id,
+                client:users!jobs_client_id_fkey(id, first_name, last_name, profile_pic)
+            `);
+
+        if (bidJobIds.length > 0) {
+            query = query.or(`assigned_worker_id.eq.${currentUserId},id.in.(${bidJobIds.join(',')})`);
+        } else {
+            query = query.eq('assigned_worker_id', currentUserId);
+        }
+
+        const { data: jobs, error } = await query.order('created_at', { ascending: false });
+
+        if (error || !jobs || jobs.length === 0) {
+            document.getElementById('contactList').innerHTML = `<div style="text-align: center; padding: 30px 15px; color: #a3a3a3; font-size: 0.9rem;">No active chat contacts yet. Once you bid on or get assigned to a job, client contacts will appear here.</div>`;
+            return;
+        }
+
+        let html = '';
+        jobs.forEach(job => {
+            const client = job.client;
+            if (!client) return;
+            const init = ((client.first_name ? client.first_name[0] : 'C') + (client.last_name ? client.last_name[0] : '')).toUpperCase();
+            const isActive = (activeClientId == client.id && activeJobId == job.id);
+            const isLocked = ['completed', 'cancelled'].includes(job.status);
+
+            html += `
+                <a href="chat.html?client_id=${client.id}&job_id=${job.id}" class="contact-item ${isActive ? 'active' : ''}">
+                    <div class="contact-avatar">${init} <div class="status-dot"></div></div>
+                    <div class="contact-info">
+                        <h4>${client.first_name} ${client.last_name || ''}</h4>
+                        <p>Job #${job.id} - ${job.title}</p>
+                    </div>
+                    ${isLocked ? `<span class="lock-badge"><i class="ph-fill ph-lock-simple"></i></span>` : ''}
+                </a>
+            `;
+        });
+
+        document.getElementById('contactList').innerHTML = html;
+    }
+
+    async function loadActiveChat(clientId, jobId) {
+        document.getElementById('chatEmpty').style.display = 'none';
+        document.getElementById('chatWindow').style.display = 'flex';
+
+        // Fetch client and job details
+        const [clientRes, jobRes] = await Promise.all([
+            supabase.from('users').select('first_name, last_name').eq('id', clientId).single(),
+            supabase.from('jobs').select('status, title').eq('id', jobId).single()
+        ]);
+
+        if (clientRes.data) {
+            const client = clientRes.data;
+            const init = ((client.first_name ? client.first_name[0] : 'C') + (client.last_name ? client.last_name[0] : '')).toUpperCase();
+            document.getElementById('activeAvatar').textContent = init;
+            document.getElementById('activeWorkerName').textContent = `${client.first_name} ${client.last_name || ''}`;
+            document.getElementById('activeJobText').textContent = `Customer (Job #${jobId}: ${jobRes.data ? jobRes.data.title : ''})`;
+        }
+
+        if (jobRes.data) {
+            isJobLocked = ['completed', 'cancelled'].includes(jobRes.data.status);
+            if (isJobLocked) {
+                document.getElementById('chatLockedBanner').style.display = 'flex';
+                document.getElementById('chatInputArea').style.opacity = '0.6';
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('btnSend').disabled = true;
+                document.getElementById('messageInput').placeholder = "Chat is archived.";
+            } else {
+                document.getElementById('chatLockedBanner').style.display = 'none';
+                document.getElementById('chatInputArea').style.opacity = '1';
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('btnSend').disabled = false;
+                document.getElementById('messageInput').placeholder = "Type your message to customer...";
+            }
+        }
+
+        // Fetch messages
+        await fetchMessages();
+
+        // Subscribe to real-time updates
+        if (currentSubscription) {
+            supabase.removeChannel(currentSubscription);
+        }
+        currentSubscription = supabase.channel(`chat_${jobId}_${clientId}_${currentUserId}`)
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `job_id=eq.${jobId}` }, payload => {
+                const msg = payload.new;
+                if ((msg.sender_id == clientId && msg.receiver_id == currentUserId) || 
+                    (msg.sender_id == currentUserId && msg.receiver_id == clientId)) {
+                    appendMessage(msg);
+                }
+            })
+            .subscribe();
+    }
+
+    async function fetchMessages() {
+        const msgContainer = document.getElementById('chatMessages');
+        const { data: messages, error } = await supabase.from('messages')
+            .select('*')
+            .eq('job_id', activeJobId)
+            .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${activeClientId}),and(sender_id.eq.${activeClientId},receiver_id.eq.${currentUserId})`)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            msgContainer.innerHTML = `<div style="text-align:center; color:#ef4444; margin-top:30px;">Error loading messages.</div>`;
+            return;
+        }
+
+        if (!messages || messages.length === 0) {
+            msgContainer.innerHTML = `<div style="text-align:center; color:#94a3b8; margin-top:30px; font-size:0.88rem;">No messages yet. Start the conversation!</div>`;
+            return;
+        }
+
+        msgContainer.innerHTML = '';
+        messages.forEach(msg => appendMessage(msg));
+    }
+
+    function appendMessage(msg) {
+        const msgContainer = document.getElementById('chatMessages');
+        if (msgContainer.innerHTML.includes('No messages yet')) {
+            msgContainer.innerHTML = '';
+        }
+
+        const isSent = msg.sender_id === currentUserId;
+        const typeClass = isSent ? 'msg-sent' : 'msg-received';
+        const timeStr = new Date(msg.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        const readStatus = isSent ? (msg.is_read ? '<span style="color:#53bdeb; font-size:12px; font-weight:bold;">✓✓</span>' : '<span style="font-size:12px; font-weight:bold;">✓</span>') : '';
+
+        const div = document.createElement('div');
+        div.className = `msg-bubble ${typeClass} fade-up show`;
+        
+        const escapedMsg = (msg.message || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        
+        div.innerHTML = `
+            ${escapedMsg}
+            <div class="msg-time">${timeStr} ${readStatus}</div>
+        `;
+        msgContainer.appendChild(div);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
+
+    async function sendMessage() {
+        if (isJobLocked) return;
+        const input = document.getElementById('messageInput');
+        const text = input.value.trim();
+        if (!text || !activeClientId || !activeJobId) return;
+
+        input.value = '';
+
+        const { error } = await supabase.from('messages').insert([{
+            job_id: activeJobId,
+            sender_id: currentUserId,
+            receiver_id: activeClientId,
+            message: text
+        }]);
+
+        if (error) {
+            console.error(error);
+            alert("Failed to send message: " + error.message);
+        }
+    }
+</script>
+</body>
+</html>
+
