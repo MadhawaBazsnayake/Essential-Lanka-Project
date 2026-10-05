@@ -1,0 +1,93 @@
+
+
+<!-- Terms & Conditions Page Specific Inline CSS -->
+<style>
+    .terms-section { padding: 80px 5%; min-height: 80vh; position: relative; }
+    .terms-container { max-width: 900px; margin: 0 auto; position: relative; z-index: 10; }
+    
+    .terms-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.95); box-shadow: 0 20px 50px rgba(0,0,0,0.06); padding: 60px; border-radius: 40px; }
+    
+    .terms-header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #f0ebe1; padding-bottom: 30px; }
+    .terms-header h1 { font-size: 2.8rem; font-weight: 800; color: #1a1a1a; margin-bottom: 10px; letter-spacing: -1px; }
+    .terms-header p { font-size: 0.95rem; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Legal Content Styling */
+    .legal-content h3 { font-size: 1.35rem; font-weight: 800; color: #1a1a1a; margin-top: 35px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+    .legal-content h3 span { color: #10b981; font-size: 1.1rem; }
+    .legal-content p { font-size: 1.05rem; color: #4a4a4a; line-height: 1.8; margin-bottom: 20px; font-weight: 400; }
+    .legal-content ul { margin-bottom: 20px; padding-left: 20px; }
+    .legal-content ul li { font-size: 1.05rem; color: #4a4a4a; line-height: 1.8; margin-bottom: 8px; }
+
+    .update-badge { display: inline-block; background: rgba(16,185,129,0.1); color: #059669; padding: 6px 16px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; margin-bottom: 20px; }
+
+    @media (max-width: 768px) {
+        .terms-card { padding: 35px 25px; border-radius: 25px; }
+        .terms-header h1 { font-size: 2.2rem; }
+        .legal-content h3 { font-size: 1.2rem; }
+    }
+</style>
+
+<section class="terms-section bg-cream">
+    <div class="mesh-bg"></div>
+
+    <div class="terms-container">
+        <div class="terms-card fade-up show">
+            
+            <!-- Header -->
+            <div class="terms-header">
+                <span class="update-badge">Last Updated: August 2026</span>
+                <h1>Terms & Conditions</h1>
+                <p>Please read these terms carefully before using Essential Lanka.</p>
+            </div>
+
+            <!-- Content Body -->
+            <div class="legal-content">
+                
+                <h3><span>01.</span> Acceptance of Terms</h3>
+                <p>By accessing or using the Essential Lanka platform (website, mobile application, or USSD services), you agree to be bound by these Terms and Conditions. If you disagree with any part of these terms, you may not access our services.</p>
+
+                <h3><span>02.</span> User Accounts & Registration</h3>
+                <p>To use certain features of the platform, you must register for an account. You agree to:</p>
+                <ul>
+                    <li>Provide accurate, current, and complete information during registration.</li>
+                    <li>Maintain the security of your password and account details.</li>
+                    <li>Promptly update any changes to your mobile number or personal details.</li>
+                    <li>Accept full responsibility for all activities that occur under your account.</li>
+                </ul>
+
+                <h3><span>03.</span> Worker Verification & Services</h3>
+                <p>While Essential Lanka performs standard identity verification (such as NIC checks) for service professionals, we act solely as a connecting platform between customers and independent skilled workers. We do not directly employ the service providers listed on our platform.</p>
+
+                <h3><span>04.</span> Payments and Fees</h3>
+                <p>Customers agree to pay the agreed-upon service fees directly to the worker in cash or through our secure digital payment gateways upon satisfactory completion of the work. Essential Lanka reserves the right to introduce service or platform fees with prior notice to users.</p>
+
+                <h3><span>05.</span> User Conduct & Prohibited Activities</h3>
+                <p>Users of Essential Lanka agree not to engage in any unlawful activities, harass or harm service providers or customers, provide false reviews, or attempt to bypass the platform's security mechanisms. Violation of these rules will result in immediate account termination.</p>
+
+                <h3><span>06.</span> Limitation of Liability</h3>
+                <p>Essential Lanka shall not be held liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to the services provided by independent workers or any disputes between platform users.</p>
+
+                <h3><span>07.</span> Changes to Terms</h3>
+                <p>We reserve the right to modify or replace these Terms at any time at our sole discretion. Continued use of the platform after any changes constitutes acceptance of the new Terms.</p>
+
+                <h3><span>08.</span> Contact Us</h3>
+                <p>If you have any questions about these Terms, please contact our legal and support team via our <a href="contact.html" style="color: #10b981; font-weight: 700; text-decoration: none;">Contact Page</a>.</p>
+
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+    <footer id="site-footer"></footer>
+    <script type="module">
+        import { loadLayout } from './js/layout.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLayout();
+        });
+    </script>
+</body>
+</html>
+
+

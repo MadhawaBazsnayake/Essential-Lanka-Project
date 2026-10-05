@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Gigs - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .page-section { padding: 50px 5%; min-height: 85vh; position: relative; }
+        .page-container { max-width: 1100px; margin: 0 auto; position: relative; z-index: 10; }
+        
+        .header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; flex-wrap: wrap; gap: 20px; }
+        .page-title { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; display: flex; align-items: center; gap: 10px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; color: #666; text-decoration: none; font-weight: 700; transition: 0.3s; font-size: 1.05rem; margin-bottom: 15px; }
+        .back-btn:hover { color: #10b981; }
+
+        .btn-create { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 14px 28px; border-radius: 50px; font-weight: 800; text-decoration: none; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 10px 25px rgba(16,185,129,0.3); border: none; cursor: pointer; font-size: 1.05rem; }
+        .btn-create:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(16,185,129,0.4); }
+
+        .glass-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 40px rgba(0,0,0,0.06); padding: 35px; border-radius: 35px; animation: fadeUp 0.5s ease forwards;}
+        
+        .perf-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .perf-card { background: #ffffff; border: 1.5px solid #f0ebe1; padding: 20px; border-radius: 20px; display: flex; align-items: center; gap: 15px; }
+        .perf-icon { width: 50px; height: 50px; border-radius: 15px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; }
+        .perf-info p { font-size: 0.85rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+        .perf-info h4 { font-size: 1.4rem; font-weight: 800; color: #1a1a1a; }
+
+        .gig-card { background: #ffffff; border: 1.5px solid #f0ebe1; padding: 25px; border-radius: 25px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; transition: 0.3s; flex-wrap: wrap; gap: 25px; position: relative; overflow: hidden; }
+        .gig-card::before { content: ''; position: absolute; left: 0; top: 0; width: 6px; height: 100%; background: #e2e8f0; transition: 0.3s; }
+        .gig-card.active-gig::before { background: #10b981; }
+        .gig-card:hover { border-color: #cbd5e1; box-shadow: 0 15px 40px rgba(0,0,0,0.04); transform: translateY(-3px); }
+        
+        .gig-img-placeholder { width: 100px; height: 100px; border-radius: 15px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; color: #cbd5e1; flex-shrink: 0; object-fit: cover; }
+        
+        .gig-info { flex: 1; min-width: 250px; display: flex; gap: 20px; align-items: center; }
+        .gig-details { flex: 1; }
+        .gig-title { font-size: 1.25rem; font-weight: 800; color: #1a1a1a; margin-bottom: 8px; }
+        
+        .gig-meta-tags { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .meta-tag { background: #f8fafc; color: #475569; padding: 5px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e2e8f0; }
+        .meta-tag.highlight { background: rgba(245, 158, 11, 0.1); color: #d97706; border-color: rgba(245, 158, 11, 0.2); }
+
+        .action-group { display: flex; gap: 10px; align-items: center; }
+        .btn-icon { width: 45px; height: 45px; border-radius: 12px; border: 2px solid #e5dfd5; background: #ffffff; color: #64748b; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: 0.3s; }
+        .btn-icon:hover { border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.05); }
+        .btn-icon.edit:hover { border-color: #10b981; color: #10b981; background: rgba(16,185,129,0.05); }
+        .btn-icon.delete:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.05); }
+
+        .switch-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-right: 15px; }
+        .switch-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.3s; padding: 20px; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-box { background: #ffffff; width: 100%; max-width: 600px; border-radius: 25px; padding: 35px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); transform: translateY(30px) scale(0.95); transition: 0.4s; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
+        .close-btn { position: absolute; top: 25px; right: 25px; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.3s; border: none; background: transparent; }
+        .close-btn:hover { color: #ef4444; transform: rotate(90deg); }
+        .modal-title { font-size: 1.5rem; font-weight: 800; color: #1a1a1a; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; color: #1e293b; }
+        .form-control { width: 100%; padding: 12px 18px; border-radius: 12px; border: 2px solid #e2e8f0; background: #f8fafc; font-size: 0.95rem; transition: 0.3s; outline: none; font-family: inherit; }
+        .form-control:focus { border-color: #10b981; background: #ffffff; box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
+        
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .gig-info { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .gig-img-placeholder { width: 100%; height: 150px; }
+            .action-group { width: 100%; border-top: 1px solid #f0ebe1; padding-top: 20px; justify-content: space-between; }
+            .switch-wrap { flex-direction: row; width: 100%; justify-content: space-between; margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="page-section bg-cream">
+    <div class="mesh-bg"></div>
+    <div class="page-container">
+        
+        <a href="dashboard.html" class="back-btn fade-up show"><i class="ph-bold ph-arrow-left"></i> Back to Dashboard</a>
+        
+        <div class="header-action fade-up show" style="transition-delay: 50ms;">
+            <h1 class="page-title"><i class="ph-fill ph-briefcase" style="color: #10b981;"></i> Manage My Gigs</h1>
+            <button class="btn-create" onclick="window.openModal('newGigModal')"><i class="ph-bold ph-plus-circle"></i> Create New Gig</button>
+        </div>
+
+        <div class="glass-box glass-premium fade-up show" style="transition-delay: 100ms;">
+            
+            <div class="perf-row">
+                <div class="perf-card">
+                    <div class="perf-icon" style="background: rgba(59,130,246,0.1); color: #3b82f6;"><i class="ph-fill ph-eye"></i></div>
+                    <div class="perf-info">
+                        <p>Total Views</p>
+                        <h4>0</h4>
+                    </div>
+                </div>
+                <div class="perf-card">
+                    <div class="perf-icon" style="background: rgba(16,185,129,0.1); color: #10b981;"><i class="ph-fill ph-check-circle"></i></div>
+                    <div class="perf-info">
+                        <p>Completed Orders</p>
+                        <h4 id="completedCount">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div id="gigsContainer">
+                <div style="text-align:center; padding: 40px; color:#64748b;">Loading gigs...</div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Modals -->
+<div class="modal-overlay" id="newGigModal">
+    <div class="modal-box">
+        <button class="close-btn" onclick="window.closeModal('newGigModal')"><i class="ph-bold ph-x"></i></button>
+        <h2 class="modal-title"><i class="ph-fill ph-plus-circle" style="color: #10b981;"></i> Create New Gig</h2>
+        
+        <form id="newGigForm">
+            <div class="form-group">
+                <label>Gig Title</label>
+                <input type="text" class="form-control" id="newGigTitle" placeholder="I will do professional..." required>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select class="form-control" id="newGigCat" required>
+                        <option value="" disabled selected>Select...</option>
+                        <option value="electrical">Electrical</option>
+                        <option value="plumbing">Plumbing</option>
+                        <option value="cleaning">Cleaning</option>
+                        <option value="carpentry">Carpentry</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Base Price (Rs.)</label>
+                    <input type="number" class="form-control" id="newGigPrice" placeholder="e.g. 1500" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Detailed Description</label>
+                <textarea class="form-control" id="newGigDesc" rows="4" placeholder="Describe the service you are providing..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn-create" style="width: 100%; justify-content: center;"><i class="ph-bold ph-rocket-launch"></i> Publish Gig</button>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="editGigModal">
+    <div class="modal-box">
+        <button class="close-btn" onclick="window.closeModal('editGigModal')"><i class="ph-bold ph-x"></i></button>
+        <h2 class="modal-title"><i class="ph-fill ph-pencil-simple" style="color: #3b82f6;"></i> Edit Gig</h2>
+        
+        <form id="editGigForm">
+            <input type="hidden" id="editGigId">
+            <div class="form-group">
+                <label>Gig Title</label>
+                <input type="text" class="form-control" id="editTitle" required>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select class="form-control" id="editCategory" required>
+                        <option value="electrical">Electrical</option>
+                        <option value="plumbing">Plumbing</option>
+                        <option value="cleaning">Cleaning</option>
+                        <option value="carpentry">Carpentry</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Base Price (Rs.)</label>
+                    <input type="number" class="form-control" id="editPrice" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Detailed Description</label>
+                <textarea class="form-control" id="editDesc" rows="4" required></textarea>
+            </div>
+
+            <button type="submit" class="btn-create" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 10px 25px rgba(59,130,246,0.3);"><i class="ph-bold ph-floppy-disk"></i> Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<script type="module">
+    import { loadLayout } from '../js/layout.js';
+    import { supabase } from '../js/supabase-client.js';
+
+    let currentUserId = null;
+    let gigsData = [];
+
+    window.openModal = function(modalId) {
+        document.getElementById(modalId).classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeModal = function(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = 'auto';
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout();
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('id, role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'worker') { window.location.href = '../login.html'; return; }
+
+        currentUserId = profile.id;
+        
+        const { count } = await supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('assigned_worker_id', currentUserId).eq('status', 'completed');
+        document.getElementById('completedCount').innerHTML = count || 0;
+
+        await loadGigs();
+
+        document.getElementById('newGigForm').addEventListener('submit', createGig);
+        document.getElementById('editGigForm').addEventListener('submit', updateGig);
+    });
+
+    async function loadGigs() {
+        const { data: gigs, error } = await supabase.from('gigs').select('*').eq('worker_id', currentUserId).order('created_at', { ascending: false });
+        if (error || !gigs || gigs.length === 0) {
+            document.getElementById('gigsContainer').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #64748b;">
+                    <i class="ph-fill ph-folder-open" style="font-size: 4rem; margin-bottom: 15px; color: #cbd5e1;"></i>
+                    <h3>No Gigs Found</h3>
+                    <p>You haven't created any services yet. Click "Create New Gig" to get started!</p>
+                </div>
+            `;
+            return;
+        }
+
+        gigsData = gigs;
+        let html = '';
+        gigs.forEach(gig => {
+            const isActive = gig.status === 'active';
+            html += `
+                <div class="gig-card ${isActive ? 'active-gig' : ''}" id="gig-${gig.id}">
+                    <div class="gig-info">
+                        <div class="gig-img-placeholder"><i class="ph-fill ph-image"></i></div>
+                        <div class="gig-details">
+                            <h3 class="gig-title">${gig.title}</h3>
+                            <div class="gig-meta-tags">
+                                <span class="meta-tag"><i class="ph-fill ph-tag" style="color: #3b82f6;"></i> ${gig.category}</span>
+                                <span class="meta-tag highlight"><i class="ph-fill ph-money"></i> Base: Rs. ${gig.base_price}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-group">
+                        <div class="switch-wrap">
+                            <span class="switch-label" id="status-text-${gig.id}">${isActive ? 'Active' : 'Paused'}</span>
+                            <label class="switch">
+                                <input type="checkbox" ${isActive ? 'checked' : ''} onchange="window.toggleGig(${gig.id}, this)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <button class="btn-icon edit" onclick="window.triggerEdit(${gig.id})"><i class="ph-bold ph-pencil-simple"></i></button>
+                        <button class="btn-icon delete" onclick="window.deleteGig(${gig.id})"><i class="ph-bold ph-trash"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('gigsContainer').innerHTML = html;
+    }
+
+    async function createGig(e) {
+        e.preventDefault();
+        const payload = {
+            worker_id: currentUserId,
+            title: document.getElementById('newGigTitle').value,
+            category: document.getElementById('newGigCat').value,
+            base_price: parseFloat(document.getElementById('newGigPrice').value),
+            description: document.getElementById('newGigDesc').value,
+            status: 'active'
+        };
+
+        const { error } = await supabase.from('gigs').insert([payload]);
+        if(error) {
+            Swal.fire('Error', 'Failed to create gig.', 'error');
+        } else {
+            Swal.fire('Success', 'Gig Created!', 'success').then(() => {
+                window.closeModal('newGigModal');
+                loadGigs();
+            });
+        }
+    }
+
+    window.triggerEdit = function(id) {
+        const gig = gigsData.find(g => g.id === id);
+        if(!gig) return;
+
+        document.getElementById('editGigId').value = gig.id;
+        document.getElementById('editTitle').value = gig.title;
+        document.getElementById('editCategory').value = gig.category.toLowerCase();
+        document.getElementById('editPrice').value = gig.base_price;
+        document.getElementById('editDesc').value = gig.description;
+
+        window.openModal('editGigModal');
+    };
+
+    async function updateGig(e) {
+        e.preventDefault();
+        const gigId = document.getElementById('editGigId').value;
+        const payload = {
+            title: document.getElementById('editTitle').value,
+            category: document.getElementById('editCategory').value,
+            base_price: parseFloat(document.getElementById('editPrice').value),
+            description: document.getElementById('editDesc').value,
+        };
+
+        const { error } = await supabase.from('gigs').update(payload).eq('id', gigId);
+        if(error) {
+            Swal.fire('Error', 'Failed to update gig.', 'error');
+        } else {
+            Swal.fire('Success', 'Gig Updated!', 'success').then(() => {
+                window.closeModal('editGigModal');
+                loadGigs();
+            });
+        }
+    }
+
+    window.toggleGig = async function(id, checkbox) {
+        const newStatus = checkbox.checked ? 'active' : 'paused';
+        checkbox.disabled = true;
+
+        const { error } = await supabase.from('gigs').update({ status: newStatus }).eq('id', id);
+        if (error) {
+            Swal.fire('Error', 'Failed to update status.', 'error');
+            checkbox.checked = !checkbox.checked;
+        } else {
+            const card = document.getElementById('gig-' + id);
+            const textLabel = document.getElementById('status-text-' + id);
+            if (newStatus === 'active') {
+                card.classList.add('active-gig');
+                textLabel.innerText = 'Active';
+            } else {
+                card.classList.remove('active-gig');
+                textLabel.innerText = 'Paused';
+            }
+        }
+        checkbox.disabled = false;
+    };
+
+    window.deleteGig = async function(id) {
+        if(!confirm("Are you sure you want to permanently delete this gig?")) return;
+        
+        const { error } = await supabase.from('gigs').delete().eq('id', id);
+        if (error) {
+            Swal.fire('Error', 'Failed to delete gig.', 'error');
+        } else {
+            const gigCard = document.getElementById('gig-' + id);
+            if(gigCard) {
+                gigCard.style.opacity = '0';
+                gigCard.style.transform = 'scale(0.95)';
+                setTimeout(() => gigCard.remove(), 300);
+            }
+        }
+    };
+</script>
+</body>
+</html>
+

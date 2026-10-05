@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Active Jobs - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .page-section { padding: 50px 5%; min-height: 85vh; position: relative; }
+        .page-container { max-width: 1000px; margin: 0 auto; position: relative; z-index: 10; }
+        
+        .header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; color: #666; text-decoration: none; font-weight: 700; transition: 0.3s; font-size: 1.05rem; }
+        .back-btn:hover { color: #10b981; }
+        .page-title { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; }
+
+        .glass-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 40px rgba(0,0,0,0.06); padding: 40px; border-radius: 35px; animation: fadeUp 0.5s ease forwards; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .job-card { background: #ffffff; border: 1.5px solid #f0ebe1; padding: 25px; border-radius: 25px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); flex-wrap: wrap; gap: 20px; }
+        .job-card:hover { border-color: #10b981; box-shadow: 0 12px 35px rgba(16,185,129,0.1); transform: translateY(-3px); }
+        
+        .job-info { display: flex; align-items: flex-start; gap: 20px; }
+        .customer-avatar { width: 65px; height: 65px; border-radius: 20px; background-color: #e5dfd5; display: flex; justify-content: center; align-items: center; font-size: 2rem; color: #1a1a1a; flex-shrink: 0; }
+        
+        .badge-active { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+
+        .job-meta { display: flex; gap: 15px; margin-top: 8px; flex-wrap: wrap; }
+        .job-meta span { display: inline-flex; align-items: center; gap: 5px; font-size: 0.9rem; color: #666; background: #f8fafc; padding: 5px 12px; border-radius: 8px; }
+
+        .action-group { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+        
+        .btn-contact { border: 2px solid #e5dfd5; background: transparent; color: #1a1a1a; padding: 10px 20px; border-radius: 50px; font-weight: 700; text-decoration: none; transition: 0.3s; display: flex; align-items: center; gap: 8px; justify-content: center; }
+        .btn-contact:hover { border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.05); }
+        
+        .btn-complete { background: #10b981; color: white; padding: 10px 25px; border-radius: 50px; font-weight: 700; text-decoration: none; transition: 0.3s; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(16,185,129,0.2); display: flex; align-items: center; gap: 8px; justify-content: center; }
+        .btn-complete:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(16,185,129,0.3); }
+
+        @media (max-width: 768px) {
+            .job-card { flex-direction: column; align-items: flex-start; padding: 20px; }
+            .action-group { width: 100%; flex-direction: column; align-items: stretch; }
+            .header-action { flex-direction: column; align-items: flex-start; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="page-section bg-cream">
+    <div class="mesh-bg"></div>
+    
+    <div class="page-container">
+        
+        <div class="header-action fade-up show">
+            <h1 class="page-title">My Active Jobs</h1>
+            <a href="dashboard.html" class="back-btn"><i class="ph-bold ph-arrow-left"></i> Back to Dashboard</a>
+        </div>
+
+        <div class="glass-box glass-premium fade-up show" style="transition-delay: 100ms;">
+            <div id="jobsContainer">
+                <div style="text-align:center; padding: 40px; color:#64748b;">Loading active jobs...</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script type="module">
+    import { loadLayout } from '../js/layout.js';
+    import { supabase } from '../js/supabase-client.js';
+
+    let currentUserId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout();
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('id, role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'worker') { window.location.href = '../login.html'; return; }
+
+        currentUserId = profile.id;
+        await loadActiveJobs();
+    });
+
+    async function loadActiveJobs() {
+        const { data: jobs, error } = await supabase.from('jobs')
+            .select(`
+                *,
+                client:users!jobs_client_id_fkey(first_name, last_name, phone)
+            `)
+            .eq('assigned_worker_id', currentUserId)
+            .eq('status', 'in_progress')
+            .order('created_at', { ascending: false });
+
+        if (error || !jobs || jobs.length === 0) {
+            document.getElementById('jobsContainer').innerHTML = `
+                <div style="text-align:center; padding: 40px; color:#64748b;">
+                    <i class="ph-fill ph-check-circle" style="font-size: 3rem; margin-bottom: 10px; color:#cbd5e1;"></i>
+                    <p>You have no active jobs in progress.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        jobs.forEach(job => {
+            const acceptedAmount = job.accepted_bid_amount || 0;
+            const platformFee = job.platform_fee || 0;
+            const estimatedPayout = acceptedAmount - platformFee;
+            const dt = new Date(job.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+
+            html += `
+                <div class="job-card">
+                    <div class="job-info">
+                        <div class="customer-avatar">
+                            <i class="ph-fill ph-user"></i>
+                        </div>
+                        <div>
+                            <span class="badge-active"><i class="ph-bold ph-wrench"></i> In Progress</span>
+                            <h3 style="font-size: 1.25rem; font-weight: 800; color: #1a1a1a; margin-bottom: 4px;">${job.title}</h3>
+                            
+                            <div style="background: #f8fafc; border: 1px dashed #e2e8f0; padding: 10px 15px; border-radius: 10px; margin: 10px 0; font-size: 0.9rem;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span style="color:#64748b;">Agreed Amount:</span>
+                                    <span style="font-weight:700;">Rs. ${acceptedAmount.toFixed(2)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span style="color:#64748b;">Platform Fee (5%):</span>
+                                    <span style="font-weight:700; color:#ef4444;">- Rs. ${platformFee.toFixed(2)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 5px; margin-top: 5px;">
+                                    <span style="color:#10b981; font-weight:700;">Estimated Payout:</span>
+                                    <span style="font-weight:800; color:#10b981;">Rs. ${estimatedPayout.toFixed(2)}</span>
+                                </div>
+                            </div>
+
+                            <div class="job-meta">
+                                <span><i class="ph-fill ph-user-circle"></i> ${job.client ? job.client.first_name + ' ' + (job.client.last_name || '') : 'Client'}</span>
+                                <span><i class="ph-fill ph-map-pin"></i> GPS: ${job.location_lat || 0},${job.location_lng || 0}</span>
+                                <span><i class="ph-fill ph-calendar"></i> ${dt}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-group">
+                        <a href="tel:${job.client ? job.client.phone : ''}" class="btn-contact"><i class="ph-bold ph-phone"></i> Contact Customer</a>
+                        <button class="btn-complete" onclick="window.markCompleted(${job.id})"><i class="ph-bold ph-check-circle"></i> Mark as Completed</button>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('jobsContainer').innerHTML = html;
+    }
+
+    window.markCompleted = async function(jobId) {
+        if(!confirm("Are you sure you have successfully completed this job? The client will also need to confirm before funds are released.")) return;
+
+        // Note: The previous logic relied on complete-job.html, which sets job status to 'completed'.
+        const { error } = await supabase.from('jobs').update({ status: 'completed' }).eq('id', jobId);
+
+        if(error) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to complete job.' });
+        } else {
+            Swal.fire({ icon: 'success', title: 'Job Complete', text: 'Job has been marked as completed.', confirmButtonColor: '#10b981' })
+                .then(() => location.reload());
+        }
+    };
+</script>
+</body>
+</html>
+

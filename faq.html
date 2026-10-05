@@ -1,0 +1,150 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequently Asked Questions - Essential Lanka</title>
+    <meta name="theme-color" content="#10b981">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+<!-- FAQ Page Specific Inline CSS -->
+<style>
+    .faq-section { padding: 80px 5%; min-height: 80vh; position: relative; }
+    .faq-container { max-width: 900px; margin: 0 auto; position: relative; z-index: 10; }
+    
+    .faq-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 20px 50px rgba(0,0,0,0.06); padding: 50px; border-radius: 40px; }
+    
+    /* FAQ Accordion Styling */
+    .faq-item { background: #ffffff; border: 1.5px solid #f0ebe1; border-radius: 20px; margin-bottom: 20px; overflow: hidden; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .faq-item:hover { border-color: #10b981; box-shadow: 0 10px 30px rgba(16,185,129,0.08); }
+    
+    .faq-question { padding: 22px 25px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 700; font-size: 1.15rem; color: #1a1a1a; user-select: none; }
+    .faq-question i { font-size: 1.3rem; color: #10b981; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    
+    .faq-answer { max-height: 0; overflow: hidden; padding: 0 25px; color: #666; font-size: 1.05rem; line-height: 1.7; transition: all 0.4s ease-in-out; }
+    
+    /* Active State for Accordion */
+    .faq-item.active .faq-answer { padding: 0 25px 25px 25px; max-height: 200px; }
+    .faq-item.active .faq-question i { transform: rotate(180deg); }
+
+    /* Search/Header adjustments */
+    .faq-header { text-align: center; margin-bottom: 50px; }
+    .faq-header h1 { font-size: 3rem; font-weight: 800; color: #1a1a1a; margin-bottom: 15px; letter-spacing: -1px; }
+    .faq-header p { font-size: 1.2rem; color: #666; }
+
+    @media (max-width: 768px) {
+        .faq-card { padding: 30px 20px; border-radius: 25px; }
+        .faq-header h1 { font-size: 2.2rem; }
+        .faq-question { font-size: 1rem; padding: 18px 20px; }
+    }
+</style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="faq-section bg-cream">
+    <div class="mesh-bg"></div>
+
+    <div class="faq-container">
+        <!-- Header -->
+        <div class="faq-header fade-up show">
+            <h1>Frequently Asked Questions</h1>
+            <p>Got questions? We've got answers about Essential Lanka.</p>
+        </div>
+
+        <!-- FAQ Content Card -->
+        <div class="faq-card fade-up show" style="transition-delay: 100ms;">
+            
+            <!-- Question 1 -->
+            <div class="faq-item active">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>How do I hire a worker on Essential Lanka?</span>
+                    <i class="ph-bold ph-caret-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Simply search for the service you need (e.g., Plumber, Electrician) along with your location on our homepage. Browse through verified profiles, compare their ratings, and connect with them instantly.
+                </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>Are all workers on the platform verified?</span>
+                    <i class="ph-bold ph-caret-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Yes, 100%! Every service professional must submit their National Identity Card (NIC) and pass our strict quality and background screening processes before getting listed.
+                </div>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>How do I pay the worker after the job is done?</span>
+                    <i class="ph-bold ph-caret-down"></i>
+                </div>
+                <div class="faq-answer">
+                    You can pay cash directly to the worker upon successful completion of the service, or use our secure in-app digital escrow payment options.
+                </div>
+            </div>
+
+            <!-- Question 4 -->
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>How can I register as a skilled worker?</span>
+                    <i class="ph-bold ph-caret-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Click on the "Join as a Worker" button on our homepage or navigation menu, fill in your skill details and NIC information, and start receiving daily job alerts in your neighborhood.
+                </div>
+            </div>
+
+            <!-- Question 5 -->
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>What if I don't have a smartphone? Can I still use this?</span>
+                    <i class="ph-bold ph-caret-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Absolutely! You can register via SMS or use our special USSD menu by dialing **#777#** on any standard button phone to receive direct job alerts and updates.
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript for Accordion Toggle Effect -->
+<script>
+function toggleFaq(element) {
+    const parentItem = element.parentElement;
+    const allItems = document.querySelectorAll('.faq-item');
+
+    // අනෙක් ඒවා ක්ලික් කළ විට වසා දැමීමට (Optional: සියල්ල වෙන වෙනම විවෘත වීමට අවශ්‍ය නම් පහළ කෝඩ් එක ඉවත් කළ හැක)
+    allItems.forEach(item => {
+        if(item !== parentItem) {
+            item.classList.remove('active');
+        }
+    });
+
+    // අදාළ එක විවෘත කිරීම හෝ වැසීම
+    parentItem.classList.toggle('active');
+}
+</script>
+
+
+    <footer id="site-footer"></footer>
+    <script type="module">
+        import { loadLayout } from './js/layout.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLayout();
+        });
+    </script>
+</body>
+</html>
+
+
