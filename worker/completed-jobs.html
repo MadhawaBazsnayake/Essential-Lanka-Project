@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completed Jobs - Essential Lanka</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <style>
+        .page-section { padding: 50px 5%; min-height: 85vh; position: relative; }
+        .page-container { max-width: 1100px; margin: 0 auto; position: relative; z-index: 10; }
+        
+        .header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; flex-wrap: wrap; gap: 20px; }
+        .page-title { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; display: flex; align-items: center; gap: 10px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; color: #666; text-decoration: none; font-weight: 700; transition: 0.3s; font-size: 1.05rem; margin-bottom: 15px; }
+        .back-btn:hover { color: #10b981; }
+
+        .glass-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 40px rgba(0,0,0,0.06); padding: 35px; border-radius: 35px; animation: fadeUp 0.5s ease forwards; }
+
+        /* Performance Stats Row */
+        .perf-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .perf-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; padding: 25px; border-radius: 20px; display: flex; align-items: center; gap: 15px; color: white; box-shadow: 0 15px 30px rgba(0,0,0,0.1); transition: 0.3s;}
+        .perf-card.highlight { background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: #059669; box-shadow: 0 15px 30px rgba(16,185,129,0.25); }
+        .perf-card:hover { transform: translateY(-3px); }
+        
+        .perf-icon { width: 55px; height: 55px; border-radius: 15px; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
+        .perf-info p { font-size: 0.85rem; color: #cbd5e1; font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
+        .perf-card.highlight .perf-info p { color: rgba(255,255,255,0.8); }
+        .perf-info h4 { font-size: 1.6rem; font-weight: 800; color: #ffffff; }
+
+        /* History Card Styling */
+        .history-card { background: #ffffff; border: 1.5px solid #f0ebe1; padding: 25px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; transition: 0.3s; flex-wrap: wrap; gap: 25px; position: relative; overflow: hidden; }
+        .history-card::before { content: ''; position: absolute; left: 0; top: 0; width: 6px; height: 100%; background: #10b981; }
+        .history-card:hover { border-color: #cbd5e1; box-shadow: 0 15px 40px rgba(0,0,0,0.04); transform: translateY(-3px); }
+        
+        .client-avatar { width: 60px; height: 60px; border-radius: 50%; background: #f8fafc; border: 2px solid #e2e8f0; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; color: #64748b; font-weight: 800; flex-shrink: 0; }
+        
+        .job-info { flex: 1; min-width: 250px; display: flex; gap: 20px; align-items: center; }
+        .job-details { flex: 1; }
+        .job-title { font-size: 1.2rem; font-weight: 800; color: #1a1a1a; margin-bottom: 5px; }
+        .client-name { font-size: 0.9rem; color: #64748b; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        
+        .job-meta-tags { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .meta-tag { background: #f8fafc; color: #475569; padding: 5px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e2e8f0; }
+        .meta-tag.success { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.2); }
+
+        .earnings-box { text-align: right; }
+        .earnings-box p { font-size: 0.8rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+        .earnings-box h3 { font-size: 1.4rem; font-weight: 800; color: #10b981; margin-bottom: 8px; }
+        
+        .star-rating { display: flex; gap: 3px; color: #f59e0b; font-size: 1rem; justify-content: flex-end; }
+        
+        .action-group { display: flex; gap: 10px; align-items: center; margin-top: 10px; justify-content: flex-end; }
+        .btn-outline { padding: 8px 16px; border-radius: 50px; border: 2px solid #e2e8f0; background: transparent; color: #64748b; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-outline:hover { background: #f8fafc; color: #1a1a1a; border-color: #cbd5e1; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .job-info { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .earnings-box { text-align: left; margin-top: 10px; padding-top: 15px; border-top: 1px solid #f0ebe1; width: 100%; }
+            .star-rating, .action-group { justify-content: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="page-section bg-cream">
+    <div class="mesh-bg"></div>
+    <div class="page-container">
+        
+        <a href="dashboard.html" class="back-btn fade-up show"><i class="ph-bold ph-arrow-left"></i> Back to Dashboard</a>
+        
+        <div class="header-action fade-up show" style="transition-delay: 50ms;">
+            <h1 class="page-title"><i class="ph-fill ph-check-circle" style="color: #10b981;"></i> Completed Jobs</h1>
+        </div>
+
+        <div class="glass-box glass-premium fade-up show" style="transition-delay: 100ms;">
+            
+            <div class="perf-row">
+                <div class="perf-card highlight">
+                    <div class="perf-icon"><i class="ph-fill ph-wallet"></i></div>
+                    <div class="perf-info">
+                        <p>Total Earned</p>
+                        <h4 id="totalEarnedDisplay">Rs. 0.00</h4>
+                    </div>
+                </div>
+                <div class="perf-card">
+                    <div class="perf-icon"><i class="ph-fill ph-briefcase"></i></div>
+                    <div class="perf-info">
+                        <p>Jobs Completed</p>
+                        <h4 id="totalJobsDisplay">0</h4>
+                    </div>
+                </div>
+                <div class="perf-card">
+                    <div class="perf-icon" style="color: #f59e0b;"><i class="ph-fill ph-star"></i></div>
+                    <div class="perf-info">
+                        <p>Overall Rating</p>
+                        <h4 id="ratingDisplay">0.0 / 5.0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div id="completedJobsContainer">
+                <div style="text-align:center; padding: 40px; color:#64748b;">Loading completed jobs...</div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<script type="module">
+    import { loadLayout } from '../js/layout.js';
+    import { supabase } from '../js/supabase-client.js';
+
+    let currentUserId = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout();
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('id, role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'worker') { window.location.href = '../login.html'; return; }
+
+        currentUserId = profile.id;
+        await loadData();
+    });
+
+    async function loadData() {
+        // Stats
+        const { data: workerProfile } = await supabase.from('worker_profiles').select('rating').eq('worker_id', currentUserId).single();
+        document.getElementById('ratingDisplay').innerHTML = `${workerProfile ? parseFloat(workerProfile.rating || 0).toFixed(1) : '0.0'} / 5.0`;
+
+        const { count, error: errCount } = await supabase.from('jobs')
+            .select('*', { count: 'exact', head: true })
+            .eq('assigned_worker_id', currentUserId)
+            .eq('status', 'completed');
+        document.getElementById('totalJobsDisplay').innerHTML = count || 0;
+
+        // Fetch completed jobs and calculate earnings
+        const { data: completedJobs, error } = await supabase.from('jobs')
+            .select(`
+                *,
+                client:users!jobs_client_id_fkey(first_name, last_name)
+            `)
+            .eq('assigned_worker_id', currentUserId)
+            .eq('status', 'completed')
+            .order('created_at', { ascending: false });
+
+        if (error || !completedJobs || completedJobs.length === 0) {
+            document.getElementById('completedJobsContainer').innerHTML = `
+                <div style="text-align:center; padding: 40px; color:#64748b;">
+                    <i class="ph-fill ph-check-circle" style="font-size: 3rem; margin-bottom: 10px; color:#cbd5e1;"></i>
+                    <p>No completed jobs found.</p>
+                </div>
+            `;
+            document.getElementById('totalEarnedDisplay').innerHTML = `Rs. 0.00`;
+            return;
+        }
+
+        let totalEarned = 0;
+        const jobIds = completedJobs.map(j => j.id);
+
+        // Fetch bids to get earnings
+        const { data: bids } = await supabase.from('bids').select('job_id, amount').in('job_id', jobIds).eq('worker_id', currentUserId).eq('status', 'accepted');
+        const bidMap = {};
+        if (bids) {
+            bids.forEach(b => bidMap[b.job_id] = parseFloat(b.amount));
+        }
+
+        // Fetch reviews to get ratings per job
+        const { data: reviews } = await supabase.from('reviews').select('job_id, rating').in('job_id', jobIds).eq('worker_id', currentUserId);
+        const reviewMap = {};
+        if (reviews) {
+            reviews.forEach(r => reviewMap[r.job_id] = r.rating);
+        }
+
+        let html = '';
+        completedJobs.forEach(job => {
+            const earned = bidMap[job.id] || parseFloat(job.budget || 0);
+            totalEarned += earned;
+            const reviewRating = reviewMap[job.id];
+            
+            const initials = (job.client.first_name[0] + (job.client.last_name ? job.client.last_name[0] : '')).toUpperCase();
+            const clientName = `${job.client.first_name} ${job.client.last_name || ''}`;
+            const dt = new Date(job.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+
+            let starsHtml = '';
+            if (reviewRating) {
+                starsHtml = '<div class="star-rating">';
+                for (let i = 0; i < reviewRating; i++) starsHtml += '<i class="ph-fill ph-star"></i>';
+                starsHtml += '</div>';
+            }
+
+            html += `
+                <div class="history-card">
+                    <div class="job-info">
+                        <div class="client-avatar">${initials}</div>
+                        <div class="job-details">
+                            <h3 class="job-title">${job.title}</h3>
+                            <p class="client-name"><i class="ph-fill ph-user"></i> ${clientName} &bull; <i class="ph-fill ph-map-pin"></i> GPS: ${job.location_lat || 0},${job.location_lng || 0}</p>
+                            <div class="job-meta-tags">
+                                <span class="meta-tag"><i class="ph-bold ph-calendar-blank"></i> ${dt}</span>
+                                <span class="meta-tag"><i class="ph-bold ph-hash"></i> Job ID: #${job.id}</span>
+                                <span class="meta-tag success"><i class="ph-bold ph-check"></i> Completed</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="earnings-box">
+                        <p>Earned Amount</p>
+                        <h3>Rs. ${earned.toFixed(2)}</h3>
+                        ${starsHtml}
+                        <div class="action-group">
+                            <button class="btn-outline" onclick="alert('Downloading Receipt for Job #${job.id}...')"><i class="ph-bold ph-download-simple"></i> Receipt</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        document.getElementById('totalEarnedDisplay').innerHTML = `Rs. ${totalEarned.toFixed(2)}`;
+        document.getElementById('completedJobsContainer').innerHTML = html;
+    }
+</script>
+</body>
+</html>
+

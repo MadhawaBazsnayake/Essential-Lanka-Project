@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Requests History - Essential Lanka</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="../assets/css/style.min.css">
+    <style>
+        .page-section { padding: 50px 5%; min-height: 85vh; position: relative; }
+        .page-container { max-width: 1000px; margin: 0 auto; position: relative; z-index: 10; }
+        .header-action { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; color: #666; text-decoration: none; font-weight: 700; transition: 0.3s; font-size: 1.05rem; }
+        .back-btn:hover { color: #10b981; }
+        .page-title { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; }
+        .glass-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15px 40px rgba(0,0,0,0.06); padding: 40px; border-radius: 35px; }
+        .request-card { background: #ffffff; border: 1.5px solid #f0ebe1; padding: 25px; border-radius: 25px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; transition: 0.3s; flex-wrap: wrap; gap: 20px; animation: fadeUp 0.5s ease forwards; }
+        .request-card:hover { border-color: #10b981; box-shadow: 0 12px 35px rgba(16,185,129,0.1); transform: translateY(-3px); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .request-info { display: flex; align-items: center; gap: 20px; }
+        .icon-box-lg { width: 65px; height: 65px; border-radius: 20px; background-color: #f4f4f5; display: flex; justify-content: center; align-items: center; font-size: 2rem; color: #666; }
+        .badge-completed { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+        .badge-canceled { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 6px 14px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+        .action-group { display: flex; gap: 12px; }
+        .btn-outline { border: 2px solid #e5dfd5; background: transparent; color: #1a1a1a; padding: 12px 20px; border-radius: 50px; font-weight: 700; text-decoration: none; transition: 0.3s; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .btn-outline:hover:not(:disabled) { border-color: #10b981; color: #10b981; }
+        .btn-outline:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-review { background: #f59e0b; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 700; text-decoration: none; transition: 0.3s; box-shadow: 0 8px 20px rgba(245,158,11,0.2); display: flex; align-items: center; gap: 8px; }
+        .btn-review:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(245,158,11,0.3); background: #d97706; }
+        .loading-state { text-align: center; padding: 40px; color: #64748b; }
+        @media (max-width: 768px) {
+            .request-card { flex-direction: column; align-items: flex-start; padding: 20px; }
+            .action-group { width: 100%; flex-direction: column; }
+            .btn-outline, .btn-review { width: 100%; justify-content: center; }
+            .header-action { flex-direction: column; align-items: flex-start; gap: 15px; }
+        }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; padding: 20px; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-box { background: #fff; width: 100%; max-width: 500px; border-radius: 25px; padding: 35px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); transform: translateY(20px); transition: 0.3s; position: relative; }
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+        .close-btn { position: absolute; top: 25px; right: 25px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; transition: 0.3s; }
+        .close-btn:hover { color: #ef4444; }
+        
+        .star-rating { display: flex; gap: 10px; margin: 20px 0; justify-content: center; flex-direction: row-reverse; }
+        .star-rating input { display: none; }
+        .star-rating label { font-size: 2.5rem; color: #e2e8f0; cursor: pointer; transition: 0.2s; }
+        .star-rating label:hover, .star-rating label:hover ~ label, .star-rating input:checked ~ label { color: #f59e0b; }
+        
+        .form-control { width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #e2e8f0; font-family: inherit; margin-bottom: 20px; resize: vertical; min-height: 100px; outline: none; }
+        .form-control:focus { border-color: #f59e0b; }
+        .btn-submit-review { background: #f59e0b; color: white; border: none; padding: 15px; width: 100%; border-radius: 50px; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+        .btn-submit-review:hover { background: #d97706; }
+    </style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="page-section bg-cream">
+    <div class="mesh-bg"></div>
+    <div class="page-container">
+        <div class="header-action fade-up show">
+            <h1 class="page-title">Requests History</h1>
+            <a href="dashboard.html" class="back-btn"><i class="ph-bold ph-arrow-left"></i> Back to Dashboard</a>
+        </div>
+        <div class="glass-box glass-premium fade-up show" style="transition-delay: 100ms;" id="requestsContainer">
+            <div class="loading-state"><i class="ph-bold ph-spinner-gap" style="animation: spin 1s linear infinite; font-size: 2rem;"></i><p>Loading your requests...</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- Review Modal -->
+<div class="modal-overlay" id="reviewModal">
+    <div class="modal-box">
+        <button class="close-btn" onclick="closeReviewModal()"><i class="ph-bold ph-x"></i></button>
+        <h2 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 5px; text-align: center;">Leave a Review</h2>
+        <p style="text-align: center; color: #64748b; margin-bottom: 20px;">Rate your experience with this worker.</p>
+        
+        <form id="reviewForm">
+            <input type="hidden" id="reviewJobId">
+            <input type="hidden" id="reviewWorkerId">
+            
+            <div class="star-rating">
+                <input type="radio" id="star5" name="rating" value="5"><label for="star5"><i class="ph-fill ph-star"></i></label>
+                <input type="radio" id="star4" name="rating" value="4"><label for="star4"><i class="ph-fill ph-star"></i></label>
+                <input type="radio" id="star3" name="rating" value="3"><label for="star3"><i class="ph-fill ph-star"></i></label>
+                <input type="radio" id="star2" name="rating" value="2"><label for="star2"><i class="ph-fill ph-star"></i></label>
+                <input type="radio" id="star1" name="rating" value="1"><label for="star1"><i class="ph-fill ph-star"></i></label>
+            </div>
+            
+            <textarea id="reviewComment" class="form-control" placeholder="Tell others about your experience..." required></textarea>
+            
+            <button type="submit" class="btn-submit-review" id="submitReviewBtn">Submit Review</button>
+        </form>
+    </div>
+</div>
+
+<footer id="site-footer"></footer>
+
+<script type="module">
+    import { loadLayout } from '../js/layout.js';
+    import { supabase } from '../js/supabase-client.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadLayout();
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('id, role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'client') { window.location.href = '../login.html'; return; }
+
+        const userId = profile.id;
+
+        // Fetch jobs with worker details and reviews
+        const { data: requests, error } = await supabase.from('jobs')
+            .select(`
+                *,
+                worker:users!jobs_assigned_worker_id_fkey(first_name, last_name),
+                reviews(id, reviewer_id)
+            `)
+            .eq('client_id', userId)
+            .order('created_at', { ascending: false });
+
+        const container = document.getElementById('requestsContainer');
+
+        if (error) {
+            console.error(error);
+            container.innerHTML = `<div style="text-align:center; color:#ef4444;">Failed to load requests.</div>`;
+            return;
+        }
+
+        if (!requests || requests.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center; padding: 40px; color:#64748b;">
+                    <i class="ph-fill ph-clipboard-text" style="font-size: 3rem; margin-bottom: 10px; color:#cbd5e1;"></i>
+                    <p>You have not made any service requests yet.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        requests.forEach(req => {
+            const isCompleted = req.status === 'completed';
+            const isCancelled = req.status === 'cancelled';
+            const isInProgress = req.status === 'in_progress';
+            
+            let badgeClass = 'badge-completed';
+            let statusLabel = req.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            let icon = 'ph-check-circle';
+            let color = '#10b981';
+
+            if (isCancelled) {
+                badgeClass = 'badge-canceled'; icon = 'ph-x-circle'; color = '#ef4444';
+            } else if (isInProgress) {
+                icon = 'ph-wrench'; color = '#3b82f6';
+            } else if (req.status === 'open') {
+                statusLabel = 'Pending Bids'; icon = 'ph-clock'; color = '#f59e0b';
+            }
+
+            const workerName = req.worker ? `${req.worker.first_name} ${req.worker.last_name}` : '';
+            const workerInfo = workerName ? `• Worker: ${workerName}` : '';
+            const dateStr = new Date(req.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            
+            const clientReviews = (req.reviews || []).filter(r => r.reviewer_id === userId);
+            const hasReviewed = clientReviews.length > 0;
+
+            let actionHtml = '';
+            if (isCompleted) {
+                if (!hasReviewed && req.assigned_worker_id) {
+                    actionHtml = `<button onclick="openReviewModal(${req.id}, ${req.assigned_worker_id})" class="btn-review"><i class="ph-fill ph-star"></i> Leave a Review</button>`;
+                } else {
+                    actionHtml = `<button class="btn-outline" disabled><i class="ph-fill ph-check"></i> Reviewed</button>`;
+                }
+            } else if (isCancelled) {
+                actionHtml = `<a href="post-job.html" class="btn-outline"><i class="ph-bold ph-arrow-counter-clockwise"></i> Re-book</a>`;
+            } else {
+                actionHtml = `<a href="chat.html?job_id=${req.id}&worker_id=${req.assigned_worker_id}" class="btn-outline"><i class="ph-bold ph-chats"></i> Message Worker</a>`;
+            }
+
+            html += `
+                <div class="request-card">
+                    <div class="request-info">
+                        <div class="icon-box-lg" style="color: ${color}; background: ${color}1a;">
+                            <i class="ph-fill ${icon}"></i>
+                        </div>
+                        <div>
+                            <span class="${badgeClass}" style="color: ${color}; background: ${color}1a;">${statusLabel}</span>
+                            <h3 style="font-size: 1.2rem; font-weight: 800; color: #1a1a1a; margin-bottom: 4px;">${req.title}</h3>
+                            <p style="font-size: 0.95rem; color: #666;">
+                                Posted on ${dateStr} ${workerInfo}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="action-group">
+                        ${actionHtml}
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    });
+
+    window.openReviewModal = function(jobId, workerId) {
+        document.getElementById('reviewJobId').value = jobId;
+        document.getElementById('reviewWorkerId').value = workerId;
+        document.getElementById('reviewModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeReviewModal = function() {
+        document.getElementById('reviewModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+        document.getElementById('reviewForm').reset();
+    };
+
+    document.getElementById('reviewForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submitReviewBtn');
+        const rating = document.querySelector('input[name="rating"]:checked');
+        
+        if (!rating) {
+            if(typeof Swal !== 'undefined') Swal.fire('Error', 'Please select a star rating', 'error');
+            else alert('Please select a star rating');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = 'Submitting...';
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data: user } = await supabase.from('users').select('id').eq('auth_id', session.user.id).single();
+
+        const payload = {
+            reviewer_id: user.id,
+            worker_id: parseInt(document.getElementById('reviewWorkerId').value),
+            job_id: parseInt(document.getElementById('reviewJobId').value),
+            rating: parseInt(rating.value),
+            comment: document.getElementById('reviewComment').value
+        };
+
+        const { error } = await supabase.from('reviews').insert([payload]);
+
+        if (error) {
+            if(typeof Swal !== 'undefined') Swal.fire('Error', error.message, 'error');
+            else alert(error.message);
+            btn.disabled = false;
+            btn.innerText = 'Submit Review';
+        } else {
+            if(typeof Swal !== 'undefined') {
+                await Swal.fire('Success', 'Your review has been submitted!', 'success');
+            } else {
+                alert('Your review has been submitted!');
+            }
+            closeReviewModal();
+            location.reload();
+        }
+    });
+</script>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</body>
+</html>
+

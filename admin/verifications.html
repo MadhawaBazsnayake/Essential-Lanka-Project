@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Verifications | Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --success: #10B981;
+            --danger: #EF4444;
+            --dark: #111827;
+            --text-main: #374151;
+            --bg-light: #F9FAFB;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-main);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .header h2 { margin: 0; display: flex; align-items: center; gap: 10px; color: var(--dark); }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); }
+        .btn-primary:hover { background: #4338CA; }
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .btn-outline { background: transparent; border: 2px solid #D1D5DB; color: #4B5563; }
+        
+        .table-wrapper {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 16px; text-align: left; border-bottom: 1px solid #E5E7EB; vertical-align: middle; }
+        th { background: #F3F4F6; font-weight: 600; color: #4B5563; }
+        tr:hover { background: #F9FAFB; }
+        
+        .nic-preview {
+            display: flex;
+            gap: 10px;
+        }
+        .nic-thumb {
+            width: 60px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #D1D5DB;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .nic-thumb:hover { transform: scale(1.1); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        
+        .actions { display: flex; gap: 8px; }
+        .actions button { padding: 8px 12px; font-size: 13px; }
+
+        #imageModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #imageModal.show { display: flex; opacity: 1; }
+        #modalImage { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .close-modal {
+            position: absolute; top: 20px; right: 30px;
+            color: #fff; font-size: 40px; cursor: pointer;
+            transition: 0.2s;
+        }
+        .close-modal:hover { color: var(--danger); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2><i class="ph-fill ph-shield-check" style="color: var(--primary);"></i> Worker Verifications (KYC)</h2>
+        <a href="dashboard.html" class="btn btn-outline"><i class="ph ph-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Worker ID</th>
+                    <th>Name</th>
+                    <th>NIC Details</th>
+                    <th>NIC Photos (Front / Back)</th>
+                    <th>Status</th>
+                    <th>Requested On</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="verificationsTableBody">
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: #6B7280;">Loading pending verifications...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Full Screen Image Modal -->
+<div id="imageModal" onclick="window.closeModalOutside(event)">
+    <span class="close-modal" onclick="window.closeModal()">&times;</span>
+    <img id="modalImage" src="">
+</div>
+
+<script type="module">
+    import { supabase } from '../js/supabase-client.js';
+
+    let allVerifications = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '../login.html'; return; }
+
+        const { data: profile } = await supabase.from('users').select('role').eq('auth_id', session.user.id).single();
+        if (!profile || profile.role !== 'admin') { window.location.href = '../login.html'; return; }
+
+        await loadVerifications();
+    });
+
+    async function loadVerifications() {
+        const { data, error } = await supabase.from('worker_profiles').select(`
+            worker_id, verification_status, nic_number, nic_front, nic_back, created_at,
+            users!inner(first_name, last_name, phone)
+        `).eq('verification_status', 'pending');
+
+        const tbody = document.getElementById('verificationsTableBody');
+        
+        if (error || !data || data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: #6B7280;">
+                        <i class="ph ph-check-circle" style="font-size: 48px; color: var(--success); margin-bottom: 10px;"></i><br>
+                        All caught up! No pending verification requests right now.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        allVerifications = data;
+        let html = '';
+
+        data.forEach(v => {
+            const dt = new Date(v.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+            
+            // Format image URLs
+            const front = v.nic_front ? (v.nic_front.startsWith('http') ? v.nic_front : `../${v.nic_front}`) : 'https://placehold.co/150x100?text=NIC+Front';
+            const back = v.nic_back ? (v.nic_back.startsWith('http') ? v.nic_back : `../${v.nic_back}`) : 'https://placehold.co/150x100?text=NIC+Back';
+
+            html += `
+                <tr id="row_${v.worker_id}">
+                    <td><strong>#${v.worker_id}</strong></td>
+                    <td>${v.users.first_name} ${v.users.last_name || ''}<br><span style="font-size:0.85em;color:#6b7280;">${v.users.phone || ''}</span></td>
+                    <td><span style="letter-spacing: 1px; font-weight: 500;">${v.nic_number || 'N/A'}</span></td>
+                    <td>
+                        <div class="nic-preview">
+                            <img src="${front}" class="nic-thumb" title="View Front" onclick="window.openModal('${front}')">
+                            <img src="${back}" class="nic-thumb" title="View Back" onclick="window.openModal('${back}')">
+                        </div>
+                    </td>
+                    <td><span style="background:#FEF3C7;color:#92400E;padding:4px 8px;border-radius:12px;font-size:12px;font-weight:bold;">Pending</span></td>
+                    <td>${dt}</td>
+                    <td class="actions">
+                        <button type="button" class="btn btn-success" onclick="window.confirmAction(${v.worker_id}, 'approve')">
+                            <i class="ph ph-check"></i> Approve
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="window.confirmAction(${v.worker_id}, 'reject')">
+                            <i class="ph ph-x"></i> Reject
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    window.confirmAction = function(workerId, actionType) {
+        let titleText = actionType === 'approve' ? 'Approve this Worker?' : 'Reject this Worker?';
+        let confirmColor = actionType === 'approve' ? '#10B981' : '#EF4444';
+        let confirmText = actionType === 'approve' ? 'Yes, Approve!' : 'Yes, Reject!';
+        let newStatus = actionType === 'approve' ? 'verified' : 'rejected';
+
+        Swal.fire({
+            title: titleText,
+            text: "Are you sure you want to proceed with this verification?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: confirmColor,
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: confirmText
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const { error } = await supabase.from('worker_profiles').update({ verification_status: newStatus }).eq('worker_id', workerId);
+                
+                if (error) {
+                    Swal.fire('Error', 'Failed to update verification status.', 'error');
+                } else {
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `Worker ${newStatus}!`, showConfirmButton: false, timer: 3000 });
+                    const row = document.getElementById(`row_${workerId}`);
+                    if(row) row.remove();
+                    
+                    // Check if empty
+                    const tbody = document.getElementById('verificationsTableBody');
+                    if(tbody.children.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: #6B7280;">
+                                    <i class="ph ph-check-circle" style="font-size: 48px; color: var(--success); margin-bottom: 10px;"></i><br>
+                                    All caught up! No pending verification requests right now.
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+            }
+        });
+    };
+
+    window.openModal = function(imageSrc) {
+        const modal = document.getElementById("imageModal");
+        const modalImg = document.getElementById("modalImage");
+        modal.classList.add("show");
+        modalImg.src = imageSrc;
+    };
+
+    window.closeModal = function() {
+        document.getElementById("imageModal").classList.remove("show");
+    };
+
+    window.closeModalOutside = function(event) {
+        const modal = document.getElementById("imageModal");
+        if (event.target == modal) {
+            window.closeModal();
+        }
+    };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,272 @@
+
+
+<!-- Contact Page Specific Inline CSS -->
+<style>
+    .contact-section { padding: 80px 5%; min-height: 80vh; position: relative; }
+    .contact-container { max-width: 1100px; margin: 0 auto; position: relative; z-index: 10; }
+    
+    .contact-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: stretch; }
+    
+    /* Info Card (Left) */
+    .contact-info-card { background: #111111; color: white; padding: 50px; border-radius: 40px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
+    .contact-info-card h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 20px; letter-spacing: -1px; }
+    .contact-info-card p { color: #a3a3a3; font-size: 1.1rem; line-height: 1.6; margin-bottom: 40px; }
+    
+    .info-item { display: flex; align-items: center; gap: 20px; margin-bottom: 25px; }
+    .info-icon { width: 55px; height: 55px; background: rgba(255,255,255,0.08); border-radius: 18px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; color: #10b981; flex-shrink: 0; }
+    .info-text h4 { font-size: 1.05rem; font-weight: 700; color: white; margin-bottom: 4px; }
+    .info-text p, .info-text a { font-size: 0.95rem; color: #a3a3a3; text-decoration: none; transition: 0.3s; }
+    .info-text a:hover { color: #10b981; }
+
+    /* Form Card (Right) */
+    .contact-form-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 20px 50px rgba(0,0,0,0.06); padding: 50px; border-radius: 40px; }
+    .contact-form-card h3 { font-size: 2rem; font-weight: 800; color: #1a1a1a; margin-bottom: 10px; }
+    .contact-form-card p { color: #666; margin-bottom: 30px; font-size: 1.05rem; }
+
+    .form-group { margin-bottom: 22px; text-align: left; }
+    .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; color: #1a1a1a; }
+    .form-control { width: 100%; padding: 16px 20px; border-radius: 18px; border: 2px solid #e5dfd5; background: #ffffff; font-size: 1rem; transition: 0.3s; outline: none; font-weight: 500; }
+    .form-control:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
+    
+    textarea.form-control { resize: vertical; min-height: 130px; }
+
+    .btn-submit { background: #10b981; color: white; padding: 18px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; transition: 0.3s; width: 100%; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(16,185,129,0.2); margin-top: 10px; }
+    .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(16,185,129,0.3); }
+
+    @media (max-width: 992px) {
+        .contact-grid { grid-template-columns: 1fr; }
+        .contact-info-card, .contact-form-card { padding: 35px 25px; border-radius: 30px; }
+        .contact-info-card h2 { font-size: 2rem; }
+    }
+</style>
+
+<section class="contact-section bg-cream">
+    <div class="mesh-bg"></div>
+
+    <div class="contact-container">
+        <div class="contact-grid">
+            
+            <!-- Left Side: Contact Information -->
+            <div class="contact-info-card fade-up show">
+                <div>
+                    <h2>Get in Touch</h2>
+                    <p>Have questions, feedback, or need assistance? Reach out to our team across Sri Lanka and we'll get back to you promptly.</p>
+                </div>
+
+                <div style="margin: 30px 0;">
+                    <div class="info-item">
+                        <div class="info-icon"><i class="ph-fill ph-map-pin"></i></div>
+                        <div class="info-text">
+                            <h4>Location</h4>
+                            <p>No. 42, Main Street, Colombo 07, Sri Lanka</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon"><i class="ph-fill ph-phone-call"></i></div>
+                        <div class="info-text">
+                            <h4>Phone Support</h4>
+                            <a href="tel:+94112345678">+94 11 234 5678</a>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon"><i class="ph-fill ph-envelope-simple"></i></div>
+                        <div class="info-text">
+                            <h4>Email Address</h4>
+                            <a href="mailto:support@essentiallanka.lk">support@essentiallanka.lk</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="social-icons" style="font-size: 1.8rem; display: flex; gap: 20px; color: #a3a3a3;">
+                    <i class="ph-fill ph-facebook-logo" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='#a3a3a3'"></i>
+                    <i class="ph-fill ph-instagram-logo" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='#a3a3a3'"></i>
+                    <i class="ph-fill ph-twitter-logo" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='#a3a3a3'"></i>
+                    <i class="ph-fill ph-linkedin-logo" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='#a3a3a3'"></i>
+                </div>
+            </div>
+
+            <!-- Right Side: Contact Form -->
+            <div class="contact-form-card fade-up show" style="transition-delay: 150ms;">
+                <h3>Send us a Message</h3>
+                <p>Fill out the form below and we will contact you within 24 hours.</p>
+
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label>Your Full Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="John Doe" required>
+                    </div>
+
+
+
+<!-- Contact Page Specific Inline CSS -->
+<style>
+    .contact-section { padding: 80px 5%; min-height: 80vh; position: relative; }
+    .contact-container { max-width: 1100px; margin: 0 auto; position: relative; z-index: 10; }
+    
+    .contact-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: stretch; }
+    
+    /* Info Card (Left) */
+    .contact-info-card { background: #111111; color: white; padding: 50px; border-radius: 40px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 20px 50px rgba(0,0,0,0.15); }
+    .contact-info-card h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 20px; letter-spacing: -1px; }
+    .contact-info-card p { color: #a3a3a3; font-size: 1.1rem; line-height: 1.6; margin-bottom: 40px; }
+    
+    .info-item { display: flex; align-items: center; gap: 20px; margin-bottom: 25px; }
+    .info-icon { width: 55px; height: 55px; background: rgba(255,255,255,0.08); border-radius: 18px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; color: #10b981; flex-shrink: 0; }
+    .info-text h4 { font-size: 1.05rem; font-weight: 700; color: white; margin-bottom: 4px; }
+    .info-text p, .info-text a { font-size: 0.95rem; color: #a3a3a3; text-decoration: none; transition: 0.3s; }
+    .info-text a:hover { color: #10b981; }
+
+    /* Form Card (Right) */
+    .contact-form-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 20px 50px rgba(0,0,0,0.06); padding: 50px; border-radius: 40px; }
+    .contact-form-card h3 { font-size: 2rem; font-weight: 800; color: #1a1a1a; margin-bottom: 10px; }
+    .contact-form-card p { color: #666; margin-bottom: 30px; font-size: 1.05rem; }
+
+    .form-group { margin-bottom: 22px; text-align: left; }
+    .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; color: #1a1a1a; }
+    .form-control { width: 100%; padding: 16px 20px; border-radius: 18px; border: 2px solid #e5dfd5; background: #ffffff; font-size: 1rem; transition: 0.3s; outline: none; font-weight: 500; }
+    .form-control:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
+    
+    textarea.form-control { resize: vertical; min-height: 130px; }
+
+    .btn-submit { background: #10b981; color: white; padding: 18px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; transition: 0.3s; width: 100%; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(16,185,129,0.2); margin-top: 10px; }
+    .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(16,185,129,0.3); }
+
+    @media (max-width: 992px) {
+        .contact-grid { grid-template-columns: 1fr; }
+        .contact-info-card, .contact-form-card { padding: 35px 25px; border-radius: 30px; }
+        .contact-info-card h2 { font-size: 2rem; }
+    }
+</style>
+
+<section class="contact-section bg-cream">
+    <div class="mesh-bg"></div>
+
+    <div class="contact-container">
+        <div class="contact-grid">
+            
+            <!-- Left Side: Contact Information -->
+            <div class="contact-info-card fade-up show">
+                <div>
+                    <h2>Get in Touch</h2>
+                    <p>Have questions, feedback, or need assistance? Reach out to our team across Sri Lanka and we'll get back to you promptly.</p>
+                </div>
+
+                <div style="margin: 30px 0;">
+                    <div class="info-item">
+                        <div class="info-icon"><i class="ph-fill ph-map-pin"></i></div>
+                        <div class="info-text">
+                            <h4>Location</h4>
+                            <p>No. 42, Main Street, Colombo 07, Sri Lanka</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon"><i class="ph-fill ph-phone-call"></i></div>
+                        <div class="info-text">
+                            <h4>Phone Support</h4>
+                            <a href="tel:+94112345678">+94 11 234 5678</a>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon"><i class="ph-fill ph-envelope-simple"></i></div>
+                        <div class="info-text">
+                            <h4>Email Address</h4>
+                            <a href="mailto:support@essentiallanka.lk">support@essentiallanka.lk</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="social-icons" style="font-size: 1.8rem; display: flex; gap: 20px; color: #a3a3a3;">
+                    <i class="ph-fill ph-facebook-logo" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='#a3a3a3'"></i>
+                    <i class="ph-fill ph-instagram-logo" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='#a3a3a3'"></i>
+                    <i class="ph-fill ph-twitter-logo" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='#a3a3a3'"></i>
+                    <i class="ph-fill ph-linkedin-logo" style="cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='#a3a3a3'"></i>
+                </div>
+            </div>
+
+            <!-- Right Side: Contact Form -->
+            <div class="contact-form-card fade-up show" style="transition-delay: 150ms;">
+                <h3>Send us a Message</h3>
+                <p>Fill out the form below and we will contact you within 24 hours.</p>
+
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label>Your Full Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="John Doe" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" name="email" class="form-control" placeholder="john@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mobile Number</label>
+                        <input type="tel" name="phone" class="form-control" placeholder="07XXXXXXXX" pattern="[0-9]{10}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Your Message</label>
+                        <textarea name="message" class="form-control" placeholder="How can we help you?" required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+    <footer id="site-footer"></footer>
+    <script type="module">
+        import { loadLayout } from './js/layout.js';
+        import { supabase } from './js/supabase-client.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLayout();
+        });
+
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const ogText = btn.innerHTML;
+            btn.innerHTML = 'Sending...';
+            btn.disabled = true;
+
+            const payload = {
+                name: document.querySelector('input[name="name"]').value,
+                email: document.querySelector('input[name="email"]').value,
+                phone: document.querySelector('input[name="phone"]').value,
+                message: document.querySelector('textarea[name="message"]').value
+            };
+
+            try {
+                const { error } = await supabase.from('contact_messages').insert([payload]);
+                if (error) throw error;
+                
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Success', 'Your message has been sent successfully. We will get back to you soon!', 'success');
+                } else {
+                    alert('Your message has been sent successfully!');
+                }
+                document.getElementById('contactForm').reset();
+            } catch (error) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Error', 'Failed to send message: ' + error.message, 'error');
+                } else {
+                    alert('Error: ' + error.message);
+                }
+            } finally {
+                btn.innerHTML = ogText;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+
+
